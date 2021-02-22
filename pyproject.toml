@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "titan"
+version = "0.1.0"
+description = "Authentiction + Authorization app"
+authors = ["Sushant Kumar <sushant.mithila@gmail.com>"]
+readme = "README.md"
+license = "LICENSE"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = {extras = ["all"], version = "^0.63.0"}
+pydantic = {extras = ["email"], version = "^1.7.3"}
+python-jose = {extras = ["cryptography"], version = "^3.2.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+flake8 = "^3.8.4"
+flake8-comprehensions = "^3.3.1"
+mypy = "^0.812"
+black = "^20.8b1"
+isort = "^5.7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+exclude = "(.eggs|.git|.hg|.mypy_cache|.pytest_cache|.ipynb_checkpoints|.nox|.tox|.venv|.svn|_build|buck-out|build|dist)"
+
+[tool.isort]
+profile = "black"
+src_paths = ["titan", "tests"]
+line_length = 120
