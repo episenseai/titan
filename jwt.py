@@ -22,6 +22,7 @@ class JWTAccessRefreshToken(JWTAccessToken, JWTRefreshToken):
     pass
 
 
+# https://tools.ietf.org/html/rfc7519#page-9
 class JWTTokenClaims(BaseModel):
     # subject
     sub: Optional[Union[StrictStr, StrictInt]] = None
@@ -42,6 +43,7 @@ class JWTTokenClaims(BaseModel):
         else:
             raise RuntimeError("Can not issue token")
 
+        # jit: unique identifier
         reserved_claims = {"exp": exp, "jti": str(uuid.uuid4())}
 
         encoded_jwt = jwt.encode(

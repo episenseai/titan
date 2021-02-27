@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import Depends, FastAPI
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 from pydantic import BaseModel
 from pydantic.types import UUID4, EmailStr
 from datetime import datetime
@@ -25,7 +25,7 @@ class User(UserID):
 
 
 @app.post("/token")
-async def login_for_access_token():
+async def login():
     pass
 
 
