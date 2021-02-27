@@ -1,9 +1,11 @@
 from typing import Optional, Set
-from pydantic import BaseModel, validator, root_validator
+from pydantic import validator, root_validator
 from datetime import timedelta
 from functools import lru_cache
 
 from pydantic.types import StrictBool, StrictStr
+
+from ..model import ImmutBaseModel
 
 
 # In the real case, you can put the
@@ -50,7 +52,7 @@ asymetric_crypto = {
 }
 
 
-class __AuthSettings(BaseModel):
+class __AuthSettings(ImmutBaseModel):
     authjwt_algorithm: StrictStr = "RS512"
     authjwt_secret_key: Optional[StrictStr] = None
     authjwt_public_key: Optional[StrictStr] = public_key
@@ -104,12 +106,6 @@ class __AuthSettings(BaseModel):
             return self.authjwt_secret_key
         else:
             raise RuntimeError(f"Unsupported algorithm = {self.authjwt_algorithm} for jwt")
-
-    class Config:
-        # faux immutability of fields
-        allow_mutation = False
-        # validate field defaults
-        validate_all = True
 
 
 @lru_cache()

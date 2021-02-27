@@ -1,6 +1,3 @@
-from fastapi import status
-
-
 class AuthException(Exception):
     """Base class of all JWT Exceptions"""
 
@@ -36,4 +33,8 @@ class RevokedRefreshToken(AuthException):
 
 
 class RevokedFreshToken(AuthException):
+    pass
+
+
+class PasswordTooSmall(Exception):
     pass
