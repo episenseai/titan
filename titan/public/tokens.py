@@ -71,6 +71,7 @@ def is_refresh_token_revoked() -> bool:
     False
 
 
+"""
 @tokens_router.post(
     "/refresh",
     response_class=AccessToken,
@@ -78,3 +79,4 @@ def is_refresh_token_revoked() -> bool:
 )
 async def refresh(form_data: OAuth2RefreshTokenRequestForm = Depends()):
     pass
+"""

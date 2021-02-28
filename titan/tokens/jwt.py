@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 from jose import jwt
 from jose.exceptions import JOSEError, JWTError
 from pydantic.types import StrictInt, StrictStr
+from pydantic import validator
 
 from .config import get_auth_config
 from ..model import ImmutBaseModel
@@ -34,13 +35,22 @@ class AccessRefreshToken(AccessToken, RefreshToken):
 # https://tools.ietf.org/html/rfc7519#page-9
 class TokenClaims(ImmutBaseModel):
     # subject
-    sub: Optional[Union[StrictStr, StrictInt]] = None
+    sub: Union[StrictStr, StrictInt]
     # issuer
     iss: Optional[Union[StrictStr, StrictInt]] = None
     # audience
     aud: Optional[Union[StrictStr, Sequence[StrictStr]]] = None
     # scopes
-    scopes: Optional[StrictStr] = None
+    scopes: Union[StrictStr, List[StrictStr]] = ""
+
+    @validator("scopes", pre=True)
+    def join_scopes(cls, values):
+        """
+        Join the list of scopes into a space separated string of scopes
+        """
+        if isinstance(values, list):
+            return " ".join(values)
+        return values
 
     def _mint_token(self, ttype: str) -> EncodedJWTToken:
         config = get_auth_config()
@@ -77,17 +87,16 @@ class TokenClaims(ImmutBaseModel):
         rtoken = self.mint_refresh_token()
         return AccessRefreshToken(**atoken.dict(), **rtoken.dict())
 
-    class Config:
-        min_anystr_length = 1
-
 
 async def validate_and_get_token_claims_dict(raw_token: UnverifiedJWTToken) -> Optional[dict]:
     config = get_auth_config()
+
     try:
         decoded_token = jwt.decode(
             raw_token.token,
             config.get_secret_key("decode"),
             algorithm=config.authjwt_algorithm,
+            options={"require_exp": True, "require_sub": True, "require_jti": True},
         )
         return decoded_token
     except (JWTError, JOSEError):
