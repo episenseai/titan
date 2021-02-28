@@ -111,3 +111,6 @@ class __AuthSettings(ImmutBaseModel):
 @lru_cache()
 def get_auth_config() -> __AuthSettings:
     return __AuthSettings()
+
+
+get_auth_config()
