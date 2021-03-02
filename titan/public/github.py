@@ -1,7 +1,7 @@
 import secrets
 import string
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 from urllib.parse import parse_qsl, urlencode
 from uuid import uuid4
 
@@ -29,6 +29,9 @@ GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
 GITHUB_CLIENT_SECRET = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"
 
 GITHUB_USER_URL = "https://api.github.com/user"
+
+GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "WmUcqKFLcbiYSqghIIuUi4Hb"
 
 
 class StateTokenDB:
