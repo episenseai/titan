@@ -108,9 +108,9 @@ class __AuthSettings(ImmutBaseModel):
             raise RuntimeError(f"Unsupported algorithm = {self.authjwt_algorithm} for jwt")
 
 
-@lru_cache()
-def get_auth_config() -> __AuthSettings:
+@lru_cache
+def get_jwt_config() -> __AuthSettings:
     return __AuthSettings()
 
 
-get_auth_config()
+get_jwt_config()

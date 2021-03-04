@@ -7,7 +7,7 @@ from jose.exceptions import JOSEError, JWTError
 from pydantic.types import StrictInt, StrictStr
 from pydantic import validator
 
-from .config import get_auth_config
+from .config import get_jwt_config
 from ..model import ImmutBaseModel
 
 
@@ -53,7 +53,7 @@ class TokenClaims(ImmutBaseModel):
         return values
 
     def _mint_token(self, ttype: str) -> EncodedJWTToken:
-        config = get_auth_config()
+        config = get_jwt_config()
 
         if ttype == "access_token":
             exp = datetime.utcnow() + config.authjwt_access_token_expires
@@ -89,7 +89,7 @@ class TokenClaims(ImmutBaseModel):
 
 
 async def validate_and_get_token_claims_dict(raw_token: UnverifiedJWTToken) -> Optional[dict]:
-    config = get_auth_config()
+    config = get_jwt_config()
 
     try:
         decoded_token = jwt.decode(

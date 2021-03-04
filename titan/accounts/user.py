@@ -80,3 +80,14 @@ def verify_password(username: str, plain_password: str, hashed_password: str) ->
         if new_hashed_password:
             update_password_hash(username, new_hashed_password)
     return valid_password
+
+
+class UserDB:
+    def __init__(self):
+        self.db = {}
+
+    def get(self, email: str):
+        return self.db.get(email, None)
+
+    def store(self, username: str, data: dict):
+        self.db[username] = data

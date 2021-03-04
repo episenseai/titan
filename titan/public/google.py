@@ -1,17 +1,17 @@
 from .idp import IdP, OAuth2Provider, OAuth2LoginClient, OAuth2AuthClient
 from urllib.parse import parse_qsl, urlencode
-from pydantic import AnyHttpUrl, validator
+from pydantic import AnyHttpUrl
 from .state import StateToken
 
 
-class GithubLoginClient(OAuth2Provider, OAuth2LoginClient):
+class GoogleLoginClient(OAuth2Provider, OAuth2LoginClient):
     client_id: str
     scope: str
     redirect_uri: AnyHttpUrl
 
     @property
     def idp(self) -> IdP:
-        return IdP.github
+        return IdP.google
 
     def create_auth_url(self, token: StateToken) -> str:
         url_params = {
