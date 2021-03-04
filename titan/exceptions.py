@@ -1,7 +1,11 @@
+from typing import Optional
+
+
 class AuthException(Exception):
     """Base class of all JWT Exceptions"""
 
-    pass
+    def __init__(self, message: Optional[str] = None):
+        self.message = message
 
 
 class JWTDecodeError(AuthException):
@@ -37,4 +41,16 @@ class RevokedFreshToken(AuthException):
 
 
 class PasswordTooSmall(Exception):
+    pass
+
+
+class JSONEncodeError(AuthException):
+    pass
+
+
+class JSONDecodeError(AuthException):
+    pass
+
+
+class Oauth2AuthorizationError(AuthException):
     pass

@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 from pydantic import EmailStr, UUID4
 from passlib.context import CryptContext
+from ..public.idp import IdP
 
 from ..model import ImmutBaseModel
 
@@ -86,8 +87,8 @@ class UserDB:
     def __init__(self):
         self.db = {}
 
-    def get(self, email: str):
-        return self.db.get(email, None)
+    def get(self, provider_id: Union[str, int], provider: IdP):
+        return self.db.get((provider_id, provider), None)
 
-    def store(self, username: str, data: dict):
-        self.db[username] = data
+    def store(self, provider_id: Union[str, int], provider: IdP, data: dict):
+        self.db[(provider_id, provider)] = data

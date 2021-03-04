@@ -43,15 +43,23 @@ class OAuth2AuthClient(ABC):
         pass
 
     @abstractmethod
-    def create_token_url(self) -> str:
+    def get_query_params(self, code: str, state: str) -> str:
         pass
 
     @abstractmethod
-    def authorize(self) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
+    async def authorize(self, code: str, state: str) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
         """
         Exchange code for access_token and/or id_token
         Return value: (token_grant, user_dict)
         """
+        pass
+
+    @abstractmethod
+    def get_email_str(self, user_dict: Dict[str, Any]) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    def get_provider_id(self, user_dict: Dict[str, Any]) -> Optional[str]:
         pass
 
 

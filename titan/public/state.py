@@ -16,11 +16,11 @@ class StateToken(ImmutBaseModel):
     # Login is successfull, by sending the state back to the
     # frontend
     uistate: str
-    provider: IdP
+    idp: IdP
     created_at: datetime
 
     @staticmethod
-    def mint(provider: IdP, uistate: str) -> "StateToken":
+    def mint(idp: IdP, uistate: str) -> "StateToken":
         alphabet = string.ascii_letters + string.digits
         while True:
             state = "".join(secrets.choice(alphabet) for _ in range(48))
@@ -30,7 +30,7 @@ class StateToken(ImmutBaseModel):
                 and sum(c.isdigit() for c in state) >= 3
             ):
                 break
-        token = StateToken(state=state, uistate=uistate, provider=provider.value, created_at=datetime.utcnow())
+        token = StateToken(state=state, uistate=uistate, idp=idp.value, created_at=datetime.utcnow())
         return token
 
 

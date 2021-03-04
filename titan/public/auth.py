@@ -9,16 +9,16 @@ from fastapi.responses import RedirectResponse
 
 from ..tokens.jwt import AccessRefreshToken, TokenClaims
 from .state import StateTokenDB, StateToken
-from .idp import IdP, OAuth2LoginClient, Oauth2ClientRegistry
-from .github import GithubLoginClient
-from .google import GoogleLoginClient
+from .idp import IdP, OAuth2AuthClient, OAuth2LoginClient, Oauth2ClientRegistry
+from .github import GithubLoginClient, GithubAuthClient
 from ..settings import get_oauth2_config
 from ..accounts.user import UserDB
 
 auth_router = APIRouter()
-user_db = UserDB()
+fake_user_db = UserDB()
 state_token_db = StateTokenDB()
 login_client_registry = Oauth2ClientRegistry(OAuth2LoginClient)
+auth_client_registry = Oauth2ClientRegistry(OAuth2AuthClient)
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -41,23 +41,41 @@ login_client_registry.add(
     )
 )
 
+auth_client_registry.add(
+    GithubAuthClient(
+        auth_url=GITHUB_AUTH_URL,
+        token_url=GITHUB_AUTH_URL,
+        client_id=get_oauth2_config().github_client_id,
+        client_secret=get_oauth2_config().github_client_secret,
+        user_url=GITHUB_USER_URL,
+    )
+)
+
 
 def mint_state_token(p: IdP = Query(...), u: str = Query("")):
-    return StateToken.mint(provider=p, uistate=u)
+    return StateToken.mint(idp=p, uistate=u)
 
 
 def get_state_token_db() -> StateTokenDB:
     return state_token_db
 
 
-def oauth2_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
+def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
     return login_client_registry.get(p)
+
+
+def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
+    return auth_client_registry.get(p)
+
+
+def get_user_db() -> UserDB:
+    return fake_user_db
 
 
 @auth_router.get("/login")
 async def auth_url_redirect(
     token: StateToken = Depends(mint_state_token),
-    login_client: OAuth2LoginClient = Depends(oauth2_login_client),
+    login_client: OAuth2LoginClient = Depends(get_login_client),
     state_token_db: StateTokenDB = Depends(get_state_token_db),
 ):
     try:
@@ -74,7 +92,13 @@ async def auth_url_redirect(
 
 
 @auth_router.get("/auth/github", response_model=AccessRefreshToken)
-async def auth_callback(request: Request, code: Optional[str] = Query(None), state: Optional[str] = Query(None)):
+async def auth_callback(
+    request: Request,
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    state_token_db: StateTokenDB = Depends(get_state_token_db),
+    user_db: UserDB = Depends(get_user_db),
+):
     auth_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Authorization Failed",
@@ -84,54 +108,42 @@ async def auth_callback(request: Request, code: Optional[str] = Query(None), sta
     if not code or not state or len(request.query_params) > 2:
         raise auth_error
 
-    # if not state_token_db.verified(state):
-    # raise auth_error
+    # verify that we have issued the token and pop it
+    token = state_token_db.pop_and_verify(state)
+    if not token:
+        raise auth_error
+
+    auth_client = get_auth_client(token.provider)
     try:
-        url_params = AccessTokenURLParams(
-            client_id=GITHUB_CLIENT_ID, client_secret=GITHUB_CLIENT_SECRET, code=code, state=state
-        )
-        debug(url_params)
-        async with httpx.AsyncClient() as client:
-            token_response = await client.post(GITHUB_TOKEN_URL, params=url_params.dict())
-            decoded_form = token_response.content.decode()
-            debug(token_response, token_response.status_code, decoded_form)
+        (grant, user_dict) = await auth_client.authorize(code=code, state=token.state)
+        # ask for email if not present
+        # send a confirmation email
+        # verify the email
+        # activate the account
+        email = auth_client.get_email_str(user_dict)
+        provider_id = auth_client.get_provider_id(user_dict)
+        user = user_db.get(provider_id)
+        # github username: user_dict["login"]
+        # can be changed after the account creation
 
-            # check X-rate-limit error
-
-            response_dict = dict(parse_qsl(decoded_form))
-            debug(response_dict)
-            github_access_token = response_dict.get("access_token", None)
-            github_ttype = response_dict.get("token_type", None)
-            if github_access_token is None:
-                raise ValueError("Can not get access token from github")
-            if github_ttype.lower() != "bearer":
-                raise ValueError("token_type error from github")
-            github_header = {"Authorization": f"token {github_access_token}"}
-            debug(github_access_token, github_header)
-
-            user_response = await client.get(GITHUB_USER_URL, headers=github_header)
-            debug(user_response.headers, user_response.text, user_response.encoding)
-            github_user = user_response.json()
-            debug(github_user)
-
-        user = user_db.get(github_user["login"])
         if user is None:
-            github_user["uuid"] = str(uuid4())
-            github_user["scopes"] = "episense:demo"
-            user_db.store(github_user["login"], github_user)
-            user = user_db.get(github_user["login"])
+            user = {}
+            user["uuid"] = str(uuid4())
+            user["scope"] = "episense:demo"
+            provider = auth_client.idp.value
+            user["provider"] = provider
+            user_db.store(provider_id, provider, user)
+            user = user_db.get(provider_id, provider)
         debug(user)
-        # email might not be prsent if the user has marked it as private
-        # maybe redirect here to owr own url to get other user info and then
-        # issue tokens
 
+        # issue toke claims
         token_claims = TokenClaims(sub=user["uuid"], scopes=user["scopes"])
         token = token_claims.mint_access_refresh_token()
         debug(token)
         return token
+
     except Exception as ex:
         import traceback
 
-        traceback.print_exc()
-        print(ex)
+        traceback.print_exc(ex)
         raise auth_error
