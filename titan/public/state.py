@@ -11,11 +11,16 @@ from .idp import IdP
 
 class StateToken(ImmutBaseModel):
     state: StrictStr
+    # state representing the state of UI, like curren URL before
+    # starting the login flow. This can be recovered, once the
+    # Login is successfull, by sending the state back to the
+    # frontend
+    uistate: str
     provider: IdP
     created_at: datetime
 
     @staticmethod
-    def mint(provider: IdP) -> "StateToken":
+    def mint(provider: IdP, uistate: str) -> "StateToken":
         alphabet = string.ascii_letters + string.digits
         while True:
             state = "".join(secrets.choice(alphabet) for _ in range(48))
@@ -25,7 +30,7 @@ class StateToken(ImmutBaseModel):
                 and sum(c.isdigit() for c in state) >= 3
             ):
                 break
-        token = StateToken(state=state, provider=provider.value, created_at=datetime.utcnow())
+        token = StateToken(state=state, uistate=uistate, provider=provider.value, created_at=datetime.utcnow())
         return token
 
 

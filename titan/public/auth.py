@@ -42,8 +42,8 @@ login_client_registry.add(
 )
 
 
-def mint_state_token(p: IdP = Query(...)):
-    return StateToken.mint(provider=p)
+def mint_state_token(p: IdP = Query(...), u: str = Query("")):
+    return StateToken.mint(provider=p, uistate=u)
 
 
 def get_state_token_db() -> StateTokenDB:
