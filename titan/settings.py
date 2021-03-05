@@ -6,25 +6,37 @@ from .models import ImmutBaseModel
 
 AUTH_REDIRECT_URI = "http://localhost:8000/auth"
 
+GITHUB_CLIENT_SCOPE = "user:email"
+### GET THESE FROM THE **ENV***
 GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
 GITHUB_CLIENT_SECRET = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"
 
+
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+
+GOOGLE_CLIENT_SCOPE = "openid profile email"
+### GET THESE FROM THE **ENV***
 GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "WmUcqKFLcbiYSqghIIuUi4Hb"
 
 
-class __OAuth2Settings(ImmutBaseModel):
+class OAuth2Settings(ImmutBaseModel):
+    # github client app settings
     github_client_id: str = GITHUB_CLIENT_ID
-    github_client_secret: SecretStr = GITHUB_CLIENT_SECRET
+    github_client_scope: str = GITHUB_CLIENT_SCOPE
     github_redirect_uri: str = AUTH_REDIRECT_URI
+    github_client_secret: SecretStr = GITHUB_CLIENT_SECRET
+    # google client app settings
     google_client_id: str = GOOGLE_CLIENT_ID
-    google_client_secret: SecretStr = GOOGLE_CLIENT_SECRET
+    google_client_scope: str = GOOGLE_CLIENT_SCOPE
     google_redirect_uri: str = AUTH_REDIRECT_URI
+    google_client_secret: SecretStr = GOOGLE_CLIENT_SECRET
 
 
 @lru_cache
-def get_oauth2_config() -> __OAuth2Settings:
-    return __OAuth2Settings()
+def get_oauth2_settings() -> OAuth2Settings:
+    return OAuth2Settings()
 
 
-get_oauth2_config()
+get_oauth2_settings()

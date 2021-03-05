@@ -2,18 +2,37 @@ from typing import Any, Dict, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import httpx
-from pydantic import AnyHttpUrl, SecretStr
 
 from ..exceptions import JSONDecodeError, Oauth2AuthorizationError
-from .abc_client import OAuth2AuthClient, OAuth2LoginClient
-from .models import IdP, OAuth2Provider, OAuth2TokenGrant
+from .models import IdP, OAuth2TokenGrant, OAuth2LoginClient, OAuth2AuthClient
 from .state import StateToken
+from devtools import debug
+from pydantic import AnyHttpUrl, SecretStr
 
 
-class GithubLoginClient(OAuth2Provider, OAuth2LoginClient):
-    client_id: str
-    scope: str
-    redirect_uri: AnyHttpUrl
+GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
+GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+GITHUB_USER_URL = "https://api.github.com/user"
+
+
+class GithubLoginClient(OAuth2LoginClient):
+    @staticmethod
+    def new(
+        client_id: str,
+        scope: str,
+        redirect_uri: Union[AnyHttpUrl, str],
+    ) -> OAuth2LoginClient:
+        """
+        Builder method to create an instance of the class
+        """
+        return GithubLoginClient(
+            auth_url=GITHUB_AUTH_URL,
+            token_url=GITHUB_TOKEN_URL,
+            user_url=GITHUB_USER_URL,
+            client_id=client_id,
+            scope=scope,
+            redirect_uri=redirect_uri,
+        )
 
     @property
     def idp(self) -> IdP:
@@ -32,14 +51,29 @@ class GithubLoginClient(OAuth2Provider, OAuth2LoginClient):
         return f"{str(self.auth_url)}?{encoded_params}"
 
 
-class GithubAuthClient(OAuth2Provider, OAuth2AuthClient):
-    client_id: str
-    client_secret: SecretStr
-    user_url: AnyHttpUrl
+class GithubAuthClient(OAuth2AuthClient):
+    @staticmethod
+    def new(
+        client_id: str,
+        scope: str,
+        redirect_uri: Union[AnyHttpUrl, str],
+        client_secret: Union[SecretStr, str],
+    ) -> OAuth2AuthClient:
+        """
+        Builder method to create an instance of the class
+        """
+        return GithubAuthClient(
+            auth_url=GITHUB_AUTH_URL,
+            token_url=GITHUB_TOKEN_URL,
+            user_url=GITHUB_USER_URL,
+            client_id=client_id,
+            scope=scope,
+            redirect_uri=redirect_uri,
+            client_secret=client_secret,
+        )
 
     @property
     def idp(self) -> IdP:
-        print("git idp")
         return IdP.github
 
     def get_query_params(self, code: str, state: str) -> str:
@@ -49,26 +83,29 @@ class GithubAuthClient(OAuth2Provider, OAuth2AuthClient):
             "code": code,
             "state": state,
         }
-        print(f"{url_params=}")
         return url_params
 
     async def authorize(self, code: str, state: str) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
         params = self.get_query_params(code, state)
         headers = {"Accept": "application/json"}
-
         async with httpx.AsyncClient() as client:
             try:
+                print("-------------------------")
                 response = await client.post(str(self.token_url), params=params, headers=headers)
+                debug(response)
                 response.raise_for_status()
-            except httpx.RequestError as ex:
-                raise Oauth2AuthorizationError("Resquest Error for token from github") from ex
-            except httpx.HTTPStatusError as ex:
-                raise Oauth2AuthorizationError("Response code != 20x for token request from github") from ex
+            except httpx.RequestError as exc:
+                raise Oauth2AuthorizationError(f"Resquest Error for token from github {exc.request}") from exc
+            except Exception as exc:
+                raise Oauth2AuthorizationError(
+                    f"Response code != 20x for token request from github {exc.response}"
+                ) from exc
 
             try:
                 auth_response: dict = response.json()
-            except Exception as ex:
-                raise JSONDecodeError("Error decoding token reponse (JSON) from github") from ex
+                debug(auth_response)
+            except Exception as exc:
+                raise JSONDecodeError("Error decoding token reponse (JSON) from github") from exc
 
             for key in ("access_token", "token_type"):
                 if key not in auth_response:
@@ -87,20 +124,22 @@ class GithubAuthClient(OAuth2Provider, OAuth2AuthClient):
             try:
                 response = await client.get(str(self.user_url), headers=headers)
                 response.raise_for_status()
-            except httpx.RequestError as ex:
-                raise Oauth2AuthorizationError("Resquest Error for user info from github") from ex
-            except httpx.HTTPStatusError as ex:
-                raise Oauth2AuthorizationError("Response code != 20x for user info from github") from ex
+            except httpx.RequestError as exc:
+                raise Oauth2AuthorizationError(f"Resquest Error for user info from github {exc.request}") from exc
+            except httpx.HTTPStatusError as exc:
+                raise Oauth2AuthorizationError(
+                    f"Response code != 20x for user info from github {exc.response}"
+                ) from exc
 
             try:
                 user_response: dict = response.json()
-            except Exception as ex:
-                raise JSONDecodeError("Error decoding user info reponse (JSON) from github") from ex
+            except Exception as exc:
+                raise JSONDecodeError("Error decoding user info reponse (JSON) from github") from exc
 
-        return (
-            OAuth2TokenGrant(access_token=access_token, token_type=token_type),
-            user_response,
-        )
+            return (
+                OAuth2TokenGrant(access_token=access_token, token_type=token_type),
+                user_response,
+            )
 
     def get_email_str(self, user_dict: Dict[str, Any]) -> str:
         """

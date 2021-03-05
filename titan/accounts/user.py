@@ -87,8 +87,8 @@ class UserDB:
     def __init__(self):
         self.db = {}
 
-    def get(self, provider_id: Union[str, int], provider: IdP):
-        return self.db.get((provider_id, provider), None)
+    def get(self, provider_id: Union[str, int], idp: IdP):
+        return self.db.get((provider_id, idp), None)
 
-    def store(self, provider_id: Union[str, int], provider: IdP, data: dict):
-        self.db[(provider_id, provider)] = data
+    def store(self, provider_id: Union[str, int], idp: IdP, data: dict):
+        self.db[(provider_id, idp)] = data

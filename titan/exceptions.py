@@ -2,10 +2,8 @@ from typing import Optional
 
 
 class AuthException(Exception):
-    """Base class of all JWT Exceptions"""
-
-    def __init__(self, message: Optional[str] = None):
-        self.message = message
+    def __init__(self, message: str = "AuthException happened"):
+        super().__init__(message)
 
 
 class JWTDecodeError(AuthException):
