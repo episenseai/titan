@@ -97,19 +97,3 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
     @abstractmethod
     def get_provider_id(self, user_dict: Dict[str, Any]) -> Optional[str]:
         pass
-
-
-class Oauth2ClientRegistry:
-    def __init__(self, registry_class: Union[Type[OAuth2LoginClient], Type[OAuth2AuthClient]]):
-        assert registry_class in [OAuth2LoginClient, OAuth2AuthClient]
-        self._registry_class = registry_class
-        self._registry = {}
-
-    def add(self, client: Union[OAuth2LoginClient, OAuth2AuthClient]):
-        if isinstance(client, self._registry_class):
-            self._registry[client.idp] = client
-        else:
-            RuntimeError("Can not add different classes to same registry")
-
-    def get(self, idp: IdP):
-        return self._registry[idp]

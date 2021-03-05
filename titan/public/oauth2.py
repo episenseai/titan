@@ -8,7 +8,7 @@ from fastapi.responses import RedirectResponse
 
 from ..accounts.user import UserDB
 from ..oauth2.github import GithubAuthClient, GithubLoginClient
-from ..oauth2.models import IdP, OAuth2AuthClient, Oauth2ClientRegistry, OAuth2LoginClient
+from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
 from ..tokens.jwt import AccessRefreshToken, TokenClaims
@@ -16,25 +16,18 @@ from ..tokens.jwt import AccessRefreshToken, TokenClaims
 auth_router = APIRouter()
 fake_user_db = UserDB()
 fake_state_token_db = StateTokenDB()
-login_client_registry = Oauth2ClientRegistry(OAuth2LoginClient)
-auth_client_registry = Oauth2ClientRegistry(OAuth2AuthClient)
 
-
-login_client_registry.add(
-    GithubLoginClient.new(
-        client_id=get_oauth2_settings().github_client_id,
-        scope=get_oauth2_settings().github_client_scope,
-        redirect_uri=get_oauth2_settings().github_redirect_uri,
-    )
+github_login_client = GithubLoginClient.new(
+    client_id=get_oauth2_settings().github_client_id,
+    scope=get_oauth2_settings().github_client_scope,
+    redirect_uri=get_oauth2_settings().github_redirect_uri,
 )
 
-auth_client_registry.add(
-    GithubAuthClient.new(
-        client_id=get_oauth2_settings().github_client_id,
-        scope=get_oauth2_settings().github_client_scope,
-        redirect_uri=get_oauth2_settings().github_redirect_uri,
-        client_secret=get_oauth2_settings().github_client_secret,
-    )
+github_auth_client = GithubAuthClient.new(
+    client_id=get_oauth2_settings().github_client_id,
+    scope=get_oauth2_settings().github_client_scope,
+    redirect_uri=get_oauth2_settings().github_redirect_uri,
+    client_secret=get_oauth2_settings().github_client_secret,
 )
 
 
@@ -47,11 +40,17 @@ def get_state_token_db() -> StateTokenDB:
 
 
 def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
-    return login_client_registry.get(p)
+    if p == IdP.github:
+        return github_login_client
+    else:
+        raise NotImplementedError()
 
 
 def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
-    return auth_client_registry.get(p)
+    if p == IdP.github:
+        return github_auth_client
+    else:
+        raise NotImplementedError()
 
 
 def get_user_db() -> UserDB:
