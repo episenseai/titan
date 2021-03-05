@@ -1,11 +1,11 @@
+from abc import ABC, abstractmethod, abstractstaticmethod
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
 from pydantic import AnyHttpUrl, SecretStr
 
 from ..models import ImmutBaseModel
-from abc import ABC, abstractmethod, abstractstaticmethod
-from .state import StateToken
 from .idp import IdP
+from .state import StateToken
 
 
 class OAuth2TokenGrant(ImmutBaseModel):

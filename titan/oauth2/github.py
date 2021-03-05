@@ -2,13 +2,12 @@ from typing import Any, Dict, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import httpx
-
-from ..exceptions import JSONDecodeError, Oauth2AuthorizationError
-from .models import IdP, OAuth2TokenGrant, OAuth2LoginClient, OAuth2AuthClient
-from .state import StateToken
 from devtools import debug
 from pydantic import AnyHttpUrl, SecretStr
 
+from ..exceptions import JSONDecodeError, Oauth2AuthorizationError
+from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2TokenGrant
+from .state import StateToken
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"

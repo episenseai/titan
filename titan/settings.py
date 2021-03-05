@@ -12,9 +12,6 @@ GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
 GITHUB_CLIENT_SECRET = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"
 
 
-GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-
 GOOGLE_CLIENT_SCOPE = "openid profile email"
 ### GET THESE FROM THE **ENV***
 GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
