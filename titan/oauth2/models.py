@@ -53,7 +53,15 @@ class OAuth2LoginClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    def create_auth_url(self, token: StateToken) -> str:
+    def get_query_params(self, token: StateToken, refresh_token: bool) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def get_urlencoded_query_params(self, token: StateToken, refresh_token: bool) -> str:
+        pass
+
+    @abstractmethod
+    def create_auth_url(self, token: StateToken, refresh_token: bool) -> str:
         pass
 
 
@@ -79,11 +87,15 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    def get_query_params(self, code: str, state: str) -> str:
+    def get_query_params(self, code: str, token: StateToken) -> Dict[str, Any]:
         pass
 
     @abstractmethod
-    async def authorize(self, code: str, state: str) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
+    def get_urlencoded_query_params(self, code: str, token: StateToken) -> str:
+        pass
+
+    @abstractmethod
+    async def authorize(self, code: str, token: StateToken) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
         """
         Exchange code for access_token and/or id_token
         Return value: (token_grant, user_dict)

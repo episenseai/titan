@@ -38,7 +38,9 @@ class GithubLoginClient(OAuth2LoginClient):
         print("git idp")
         return IdP.github
 
-    def create_auth_url(self, token: StateToken) -> str:
+    def get_query_params(self, token: StateToken, refresh_token: bool) -> Dict[str, Any]:
+        if refresh_token:
+            raise ValueError("Github does not support refresh tokens")
         url_params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
@@ -46,7 +48,13 @@ class GithubLoginClient(OAuth2LoginClient):
             "state": token.state,
         }
         print(f"{url_params=}")
-        encoded_params = urlencode(url_params)
+        return url_params
+
+    def get_urlencoded_query_params(self, token: StateToken, refresh_token: bool) -> str:
+        return urlencode(self.get_query_params(token, refresh_token))
+
+    def create_auth_url(self, token: StateToken, refresh_token: bool = False) -> str:
+        encoded_params = self.get_urlencoded_query_params(token, refresh_token)
         return f"{str(self.auth_url)}?{encoded_params}"
 
 
@@ -75,17 +83,20 @@ class GithubAuthClient(OAuth2AuthClient):
     def idp(self) -> IdP:
         return IdP.github
 
-    def get_query_params(self, code: str, state: str) -> str:
+    def get_query_params(self, code: str, token: StateToken) -> str:
         url_params = {
             "client_id": self.client_id,
             "client_secret": self.client_secret.get_secret_value(),
             "code": code,
-            "state": state,
+            "state": token.state,
         }
         return url_params
 
-    async def authorize(self, code: str, state: str) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
-        params = self.get_query_params(code, state)
+    def get_urlencoded_query_params(self, code: str, token: StateToken) -> str:
+        return urlencode(self.get_query_params(code, token))
+
+    async def authorize(self, code: str, token: StateToken) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
+        params = self.get_query_params(code, token)
         headers = {"Accept": "application/json"}
         async with httpx.AsyncClient() as client:
             try:

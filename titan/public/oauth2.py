@@ -105,7 +105,7 @@ async def auth_callback(
         raise auth_error
 
     auth_client = get_auth_client(token.idp)
-    (grant, user_dict) = await auth_client.authorize(code=code, state=token.state)
+    (grant, user_dict) = await auth_client.authorize(code=code, token=token)
     # ask for email if not present
     # send a confirmation email
     # verify the email
@@ -129,6 +129,6 @@ async def auth_callback(
 
     # issue toke claims
     token_claims = TokenClaims(sub=user["uuid"], scopes=user["scope"])
-    token = token_claims.mint_access_refresh_token()
-    debug(token)
-    return token
+    access_token = token_claims.mint_access_refresh_token()
+    debug(access_token)
+    return access_token
