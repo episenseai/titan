@@ -1,22 +1,23 @@
 from typing import Optional
 from uuid import uuid4
 
-import httpx
 from devtools import debug
-from fastapi import APIRouter, Query, Request, status, Depends
+from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
-from ..tokens.jwt import AccessRefreshToken, TokenClaims
-from .state import StateTokenDB, StateToken
-from .idp import IdP, OAuth2AuthClient, OAuth2LoginClient, Oauth2ClientRegistry
-from .github import GithubLoginClient, GithubAuthClient
-from ..settings import get_oauth2_config
 from ..accounts.user import UserDB
+from ..exceptions import AuthException
+from ..oauth2.abc_client import OAuth2AuthClient, Oauth2ClientRegistry, OAuth2LoginClient
+from ..oauth2.github import GithubAuthClient, GithubLoginClient
+from ..oauth2.models import IdP
+from ..oauth2.state import StateToken, StateTokenDB
+from ..settings import get_oauth2_config
+from ..tokens.jwt import AccessRefreshToken, TokenClaims
 
 auth_router = APIRouter()
 fake_user_db = UserDB()
-state_token_db = StateTokenDB()
+fake_state_token_db = StateTokenDB()
 login_client_registry = Oauth2ClientRegistry(OAuth2LoginClient)
 auth_client_registry = Oauth2ClientRegistry(OAuth2AuthClient)
 
@@ -57,7 +58,7 @@ def mint_state_token(p: IdP = Query(...), u: str = Query("")):
 
 
 def get_state_token_db() -> StateTokenDB:
-    return state_token_db
+    return fake_state_token_db
 
 
 def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
@@ -79,9 +80,17 @@ async def auth_url_redirect(
     state_token_db: StateTokenDB = Depends(get_state_token_db),
 ):
     try:
+        from devtools import debug
+
+        debug(token, login_client, state_token_db)
+        print("***************")
         auth_url = login_client.create_auth_url()
+        print(f"{auth_url=}")
         state_token_db.store(token)
     except Exception as ex:
+        import traceback
+
+        traceback.print_exc(ex)
         print(ex)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -91,7 +100,7 @@ async def auth_url_redirect(
     return RedirectResponse(auth_url)
 
 
-@auth_router.get("/auth/github", response_model=AccessRefreshToken)
+@auth_router.get("/auth", response_model=AccessRefreshToken)
 async def auth_callback(
     request: Request,
     code: Optional[str] = Query(None),
@@ -129,6 +138,7 @@ async def auth_callback(
         if user is None:
             user = {}
             user["uuid"] = str(uuid4())
+            # assign default scope to the new account
             user["scope"] = "episense:demo"
             provider = auth_client.idp.value
             user["provider"] = provider
@@ -146,4 +156,6 @@ async def auth_callback(
         import traceback
 
         traceback.print_exc(ex)
+        if isinstance(ex, AuthException) and ex.message:
+            print(ex.message)
         raise auth_error

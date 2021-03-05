@@ -4,11 +4,11 @@ from typing import List, Optional, Sequence, Union
 
 from jose import jwt
 from jose.exceptions import JOSEError, JWTError
-from pydantic.types import StrictInt, StrictStr
 from pydantic import validator
+from pydantic.types import StrictInt, StrictStr
 
+from ..models import ImmutBaseModel
 from .config import get_jwt_config
-from ..model import ImmutBaseModel
 
 
 class UnverifiedJWTToken(ImmutBaseModel):

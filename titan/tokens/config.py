@@ -1,12 +1,11 @@
-from typing import Optional, Set
-from pydantic import validator, root_validator
 from datetime import timedelta
 from functools import lru_cache
+from typing import Optional, Set
 
+from pydantic import root_validator, validator
 from pydantic.types import StrictBool, StrictStr
 
-from ..model import ImmutBaseModel
-
+from ..models import ImmutBaseModel
 
 # In the real case, you can put the
 # public key and private key in *.pem, *.key then you can read that file

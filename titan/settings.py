@@ -1,8 +1,10 @@
 from functools import lru_cache
-from .model import ImmutBaseModel
+
 from pydantic import SecretStr
 
-AUTH_REDIRECT_URI = "http://localhost:8000/authorize"
+from .models import ImmutBaseModel
+
+AUTH_REDIRECT_URI = "http://localhost:8000/auth"
 
 GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
 GITHUB_CLIENT_SECRET = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"

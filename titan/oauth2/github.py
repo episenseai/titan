@@ -1,9 +1,12 @@
-from .idp import IdP, OAuth2Provider, OAuth2LoginClient, OAuth2AuthClient, OAuth2TokenGrant
-from ..exceptions import JSONDecodeError, Oauth2AuthorizationError
-import httpx
-from typing import Tuple, Dict, Any, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 from urllib.parse import urlencode
+
+import httpx
 from pydantic import AnyHttpUrl, SecretStr
+
+from ..exceptions import JSONDecodeError, Oauth2AuthorizationError
+from .abc_client import OAuth2AuthClient, OAuth2LoginClient
+from .models import IdP, OAuth2Provider, OAuth2TokenGrant
 from .state import StateToken
 
 
@@ -14,6 +17,7 @@ class GithubLoginClient(OAuth2Provider, OAuth2LoginClient):
 
     @property
     def idp(self) -> IdP:
+        print("git idp")
         return IdP.github
 
     def create_auth_url(self, token: StateToken) -> str:
@@ -23,6 +27,7 @@ class GithubLoginClient(OAuth2Provider, OAuth2LoginClient):
             "scope": self.scope,
             "state": token.state,
         }
+        print(f"{url_params=}")
         encoded_params = urlencode(url_params)
         return f"{str(self.auth_url)}?{encoded_params}"
 
@@ -34,6 +39,7 @@ class GithubAuthClient(OAuth2Provider, OAuth2AuthClient):
 
     @property
     def idp(self) -> IdP:
+        print("git idp")
         return IdP.github
 
     def get_query_params(self, code: str, state: str) -> str:
@@ -43,6 +49,7 @@ class GithubAuthClient(OAuth2Provider, OAuth2AuthClient):
             "code": code,
             "state": state,
         }
+        print(f"{url_params=}")
         return url_params
 
     async def authorize(self, code: str, state: str) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
@@ -108,7 +115,7 @@ class GithubAuthClient(OAuth2Provider, OAuth2AuthClient):
         """
         user_dict: It's the same dict that is returned by the `authorize` function
         """
-        uid = user_dict.get("id", None)
+        provider_id = user_dict.get("id", None)
         if id and isinstance(id, (str, int)):
-            return uid
+            return provider_id
         return None

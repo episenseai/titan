@@ -1,14 +1,11 @@
-from typing import Dict, Optional, Tuple, Any, Type, Union
-from ..model import ImmutBaseModel
-from pydantic import AnyHttpUrl
-from enum import Enum
 from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
+from pydantic import AnyHttpUrl
 
-class IdP(str, Enum):
-    episense = "episense"
-    github = "github"
-    google = "google"
+from ..models import ImmutBaseModel
+from .models import IdP
+from .state import StateToken
 
 
 class OAuth2Provider(ImmutBaseModel):
@@ -32,7 +29,7 @@ class OAuth2LoginClient(ABC):
         pass
 
     @abstractmethod
-    def create_auth_url(self) -> str:
+    def create_auth_url(self, token: StateToken) -> str:
         pass
 
 

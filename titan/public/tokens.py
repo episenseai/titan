@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, status, Form
-from fastapi.exceptions import HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from ..tokens.jwt import AccessRefreshToken, AccessToken, TokenClaims
-from ..accounts.user import autheticate_user
-from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
+
+from fastapi import APIRouter, Depends, Form, status
+from fastapi.exceptions import HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from ..accounts.user import autheticate_user
+from ..tokens.jwt import AccessRefreshToken, AccessToken, TokenClaims
 
 tokens_router = APIRouter()
 

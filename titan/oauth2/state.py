@@ -5,8 +5,8 @@ from typing import Union
 
 from pydantic import StrictStr
 
-from ..model import ImmutBaseModel
-from .idp import IdP
+from ..models import ImmutBaseModel
+from .models import IdP
 
 
 class StateToken(ImmutBaseModel):

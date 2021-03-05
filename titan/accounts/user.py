@@ -1,11 +1,11 @@
-from typing import Optional, Union
 from datetime import datetime
-from pydantic import EmailStr, UUID4
+from typing import Optional, Union
+
 from passlib.context import CryptContext
-from ..public.idp import IdP
+from pydantic import UUID4, EmailStr
 
-from ..model import ImmutBaseModel
-
+from ..models import ImmutBaseModel
+from ..oauth2.models import IdP
 
 # password = "secret"
 fake_users_db = {
