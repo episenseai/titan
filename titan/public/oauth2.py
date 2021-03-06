@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 
 from ..accounts.user import UserDB
 from ..oauth2.github import GithubAuthClient, GithubLoginClient
+from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
 from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
@@ -30,9 +31,28 @@ github_auth_client = GithubAuthClient.new(
     client_secret=get_oauth2_settings().github_client_secret,
 )
 
+google_login_client = GoogleLoginClient.new(
+    client_id=get_oauth2_settings().google_client_id,
+    scope=get_oauth2_settings().google_client_scope,
+    redirect_uri=get_oauth2_settings().google_redirect_uri,
+    iss=get_oauth2_settings().google_client_iss,
+)
+
+google_auth_client = GoogleAuthClient.new(
+    client_id=get_oauth2_settings().google_client_id,
+    scope=get_oauth2_settings().google_client_scope,
+    redirect_uri=get_oauth2_settings().google_redirect_uri,
+    client_secret=get_oauth2_settings().google_client_secret,
+    iss=get_oauth2_settings().google_client_iss,
+)
+
 
 def mint_state_token(p: IdP = Query(...), u: str = Query("")):
-    return StateToken.mint(idp=p, uistate=u)
+    if p == IdP.google:
+        with_nonce = True
+    else:
+        with_nonce = False
+    return StateToken.mint(idp=p, uistate=u, with_nonce=with_nonce)
 
 
 def get_state_token_db() -> StateTokenDB:
@@ -42,6 +62,8 @@ def get_state_token_db() -> StateTokenDB:
 def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
     if p == IdP.github:
         return github_login_client
+    elif p == IdP.google:
+        return google_login_client
     else:
         raise NotImplementedError()
 
@@ -49,6 +71,8 @@ def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
 def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
     if p == IdP.github:
         return github_auth_client
+    if p == IdP.google:
+        return google_auth_client
     else:
         raise NotImplementedError()
 
@@ -85,8 +109,10 @@ async def auth_url_redirect(
 @auth_router.get("/auth", response_model=AccessRefreshToken)
 async def auth_callback(
     request: Request,
+    error: Optional[str] = Query(None),
     code: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
+    scope: Optional[str] = Query(None),
     state_token_db: StateTokenDB = Depends(get_state_token_db),
     user_db: UserDB = Depends(get_user_db),
 ):
@@ -95,9 +121,17 @@ async def auth_callback(
         detail="Authorization Failed",
     )
 
-    # should not contain more then 2 params in callback
-    if not code or not state or len(request.query_params) > 2:
+    if error is not None:
+        print("{error=} returned from auth callback")
         raise auth_error
+    if code is None:
+        print("'code' param could not be found in the request")
+        raise auth_error
+    if state is None:
+        print("'state' param could not be found in the request")
+        raise auth_error
+
+    debug(code, state, scope, request.query_params)
 
     # verify that we have issued the token and pop it
     token = state_token_db.pop_and_verify(state)
@@ -105,6 +139,7 @@ async def auth_callback(
         raise auth_error
 
     auth_client = get_auth_client(token.idp)
+
     (grant, user_dict) = await auth_client.authorize(code=code, token=token)
     # ask for email if not present
     # send a confirmation email

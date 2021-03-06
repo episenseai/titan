@@ -20,6 +20,7 @@ class GithubLoginClient(OAuth2LoginClient):
         client_id: str,
         scope: str,
         redirect_uri: Union[AnyHttpUrl, str],
+        iss: Optional[str] = None,
     ) -> OAuth2LoginClient:
         """
         Builder method to create an instance of the class
@@ -31,6 +32,7 @@ class GithubLoginClient(OAuth2LoginClient):
             client_id=client_id,
             scope=scope,
             redirect_uri=redirect_uri,
+            iss=iss,
         )
 
     @property
@@ -65,6 +67,7 @@ class GithubAuthClient(OAuth2AuthClient):
         scope: str,
         redirect_uri: Union[AnyHttpUrl, str],
         client_secret: Union[SecretStr, str],
+        iss: Optional[str] = None,
     ) -> OAuth2AuthClient:
         """
         Builder method to create an instance of the class
@@ -77,6 +80,7 @@ class GithubAuthClient(OAuth2AuthClient):
             scope=scope,
             redirect_uri=redirect_uri,
             client_secret=client_secret,
+            iss=iss,
         )
 
     @property
@@ -96,11 +100,10 @@ class GithubAuthClient(OAuth2AuthClient):
         return urlencode(self.get_query_params(code, token))
 
     async def authorize(self, code: str, token: StateToken) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
-        params = self.get_query_params(code, token)
-        headers = {"Accept": "application/json"}
         async with httpx.AsyncClient() as client:
             try:
-                print("-------------------------")
+                params = self.get_query_params(code, token)
+                headers = {"Accept": "application/json"}
                 response = await client.post(str(self.token_url), params=params, headers=headers)
                 debug(response)
                 response.raise_for_status()
@@ -121,17 +124,14 @@ class GithubAuthClient(OAuth2AuthClient):
                 if key not in auth_response:
                     raise Oauth2AuthorizationError(f"Missing '{key}' in token reponse from github")
 
-            # response also contains "scope"; we are ignoring that for now
-            access_token: str = auth_response.get("access_token")
             token_type: str = auth_response.get("token_type")
-
             if not token_type or token_type.lower() != "bearer":
                 raise Oauth2AuthorizationError(f"{token_type=} != 'bearer' for token response from github")
 
-            # get user info using the access_token
-            headers = {"Authorization": f"token {access_token}"}
-
+            # Use the access_token to get the call the user info endpoint
             try:
+                access_token = auth_response.get("access_token")
+                headers = {"Authorization": f"token {access_token}"}
                 response = await client.get(str(self.user_url), headers=headers)
                 response.raise_for_status()
             except httpx.RequestError as exc:
@@ -146,10 +146,7 @@ class GithubAuthClient(OAuth2AuthClient):
             except Exception as exc:
                 raise JSONDecodeError("Error decoding user info reponse (JSON) from github") from exc
 
-            return (
-                OAuth2TokenGrant(access_token=access_token, token_type=token_type),
-                user_response,
-            )
+            return (OAuth2TokenGrant(**auth_response), user_response)
 
     def get_email_str(self, user_dict: Dict[str, Any]) -> str:
         """

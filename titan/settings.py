@@ -16,6 +16,8 @@ GOOGLE_CLIENT_SCOPE = "openid profile email"
 ### GET THESE FROM THE **ENV***
 GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "WmUcqKFLcbiYSqghIIuUi4Hb"
+# 'iss' claim in the JWT id_token from google
+GOOGLE_CLIENT_ISS = "https://accounts.google.com"
 
 
 class OAuth2Settings(ImmutBaseModel):
@@ -26,6 +28,7 @@ class OAuth2Settings(ImmutBaseModel):
     github_client_secret: SecretStr = GITHUB_CLIENT_SECRET
     # google client app settings
     google_client_id: str = GOOGLE_CLIENT_ID
+    google_client_iss: str = GOOGLE_CLIENT_ISS
     google_client_scope: str = GOOGLE_CLIENT_SCOPE
     google_redirect_uri: str = AUTH_REDIRECT_URI
     google_client_secret: SecretStr = GOOGLE_CLIENT_SECRET

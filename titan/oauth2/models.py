@@ -24,6 +24,10 @@ class OAuth2Provider(ImmutBaseModel):
     token_url: AnyHttpUrl
     # optional user info endpoint, ex. present in case of github
     user_url: Optional[AnyHttpUrl] = None
+    # url where to find the public keys of the provider to verify the token
+    jwks_uri: Optional[AnyHttpUrl] = None
+    # public keys of the provider
+    jwks_keys: Dict[str, Any] = {}
 
 
 class OAuth2ClientBase(OAuth2Provider):
@@ -33,6 +37,9 @@ class OAuth2ClientBase(OAuth2Provider):
     scope: str
     # callback url: auth_url redirects here with 'code' and 'state'
     redirect_uri: AnyHttpUrl
+    # If it's a JWT token, then it represents 'iss' claim of the
+    # received token
+    iss: Optional[str] = None
 
 
 class OAuth2LoginClient(OAuth2ClientBase, ABC):
