@@ -14,6 +14,7 @@ from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
 from ..tokens.jwt import AccessRefreshToken, TokenClaims
+from ..exceptions import OAuth2MissingScope
 
 auth_router = APIRouter()
 fake_user_db = UserDB()
@@ -135,30 +136,29 @@ async def auth_callback(
 
     auth_client = get_auth_client(token.idp)
 
-    (grant, user_dict) = await auth_client.authorize(code=code, token=token)
+    try:
+        auth_user = await auth_client.authorize(code=code, token=token)
+        debug(auth_user)
+    except OAuth2MissingScope as exc:
+        print(exc)
+        raise auth_error
+
     # ask for email if not present
     # send a confirmation email
     # verify the email
     # activate the account
-    email = auth_client.get_email_str(user_dict)
-    idp = auth_client.idp.value
-    provider_id = auth_client.get_provider_id(user_dict)
-    user = user_db.get(provider_id, idp)
-    # github username: user_dict["login"]
-    # can be changed after the account creation
+    user = user_db.get(auth_user)
 
     if user is None:
-        user = {}
-        user["uuid"] = str(uuid4())
-        # assign default scope to the new account
-        user["scope"] = "episense:demo"
-        user["provider"] = idp
-        user_db.store(provider_id, idp, user)
-        user = user_db.get(provider_id, idp)
+        user_db.create_user(auth_user)
+        user = user_db.get(auth_user)
+    if user is None:
+        raise auth_error
+
     debug(user)
 
     # issue toke claims
-    token_claims = TokenClaims(sub=user["uuid"], scopes=user["scope"])
+    token_claims = TokenClaims(sub=user.uuid.hex, scope=user.scope)
     access_token = token_claims.mint_access_refresh_token()
     debug(access_token)
     return access_token

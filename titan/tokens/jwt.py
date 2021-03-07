@@ -40,13 +40,13 @@ class TokenClaims(ImmutBaseModel):
     iss: Optional[Union[StrictStr, StrictInt]] = None
     # audience
     aud: Optional[Union[StrictStr, Sequence[StrictStr]]] = None
-    # scopes
-    scopes: Union[StrictStr, List[StrictStr]] = ""
+    # scope
+    scope: Union[StrictStr, List[StrictStr]] = ""
 
-    @validator("scopes", pre=True)
-    def join_scopes(cls, values):
+    @validator("scope", pre=True)
+    def join_scope(cls, values):
         """
-        Join the list of scopes into a space separated string of scopes
+        Join the list of scope into a space separated string of scope
         """
         if isinstance(values, list):
             return " ".join(values)

@@ -1,50 +1,34 @@
 from datetime import datetime
+from uuid import uuid4
 from typing import Optional, Union
 
 from passlib.context import CryptContext
 from pydantic import UUID4, EmailStr
 
 from ..models import ImmutBaseModel
-from ..oauth2.models import IdP
-
-# password = "secret"
-fake_users_db = {
-    "johndoe": {
-        "uuid": "b316f0b4-0417-4e42-8c4b-89a4ed6b2da0",
-        "full_name": "John Doe",
-        "username": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
-        "email_verified": True,
-        "scopes": "",
-        "created_at": "2021-02-27T19:18:54.567984",
-    },
-    "alice": {
-        "uuid": "6073da24-7b23-4a2d-933f-05bc13b046e1",
-        "username": "alice@example.com",
-        "full_name": "Alice Wonderson",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": True,
-        "email_verified": False,
-        "scopes": "",
-        "created_at": "2021-02-27T19:18:15.382777",
-    },
-}
+from ..oauth2.models import IdP, OAuth2AuthentcatedUser
 
 # ["auto"] will configure the CryptContext instance to deprecate all
 # supported schemes except for the default scheme.
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
 
+fake_users_db = {}
+
 
 class UserInDB(ImmutBaseModel):
-    uuid: UUID4
-    username: EmailStr
+    idp: IdP
+    provider_id: str
+    # we create the account only when email is verified on the oauth2 provider side
+    provider_email: str
+    provider_username: str
     full_name: str
-    hashed_password: str
+    uuid: UUID4
     disabled: bool = False
-    email_verified: bool = False
-    scopes: Optional[str] = None
+    scope: Optional[str] = None
     created_at: datetime
+    updated_at: datetime
+    # our own email verification
+    email_verified: bool = False
 
 
 async def get_user(username: str) -> Optional[UserInDB]:
@@ -87,8 +71,22 @@ class UserDB:
     def __init__(self):
         self.db = {}
 
-    def get(self, provider_id: Union[str, int], idp: IdP):
-        return self.db.get((provider_id, idp), None)
+    def get(self, auth_user: OAuth2AuthentcatedUser) -> UserInDB:
+        return self.db.get((auth_user.provider_id, auth_user.idp), None)
 
-    def store(self, provider_id: Union[str, int], idp: IdP, data: dict):
-        self.db[(provider_id, idp)] = data
+    def create_user(self, auth_user: OAuth2AuthentcatedUser) -> UserInDB:
+        uuid = uuid4()
+        current_datettime = datetime.utcnow()
+        default_scope = "episense:demo"
+
+        user = UserInDB(
+            **auth_user.dict(),
+            uuid=uuid,
+            disabled=False,
+            scope=default_scope,
+            created_at=current_datettime,
+            updated_at=current_datettime,
+            email_verified=False,
+        )
+        self.db[(auth_user.provider_id, auth_user.idp)] = user
+        return user

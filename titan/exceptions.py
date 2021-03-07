@@ -52,3 +52,15 @@ class JSONDecodeError(AuthException):
 
 class Oauth2AuthorizationError(AuthException):
     pass
+
+
+class OAuth2MissingScope(AuthException):
+    pass
+
+
+class OAuth2EmailPrivdedError(AuthException):
+    pass
+
+
+class OAuth2MissingInfo(AuthException):
+    pass

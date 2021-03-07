@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod, abstractstaticmethod
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyHttpUrl, SecretStr
 
@@ -8,13 +8,23 @@ from .idp import IdP
 from .state import StateToken
 
 
-class OAuth2TokenGrant(ImmutBaseModel):
+class OAuth2AuthentcatedCreds(ImmutBaseModel):
     access_token: str
     token_type: str
     expires_in: Optional[int] = None
-    scope: Optional[str] = None
+    scope: Union[str, List[str]]
     id_token: Optional[str] = None
     refresh_token: Optional[str] = None
+
+
+class OAuth2AuthentcatedUser(ImmutBaseModel):
+    idp: IdP
+    provider_id: str
+    provider_email: str
+    provider_username: str = ""
+    full_name: str = ""
+    avatar_url: str = ""
+    provider_creds: OAuth2AuthentcatedCreds
 
 
 class OAuth2Provider(ImmutBaseModel):
@@ -22,8 +32,6 @@ class OAuth2Provider(ImmutBaseModel):
     auth_url: AnyHttpUrl
     # get the access_token and/or refresh_token and/or id_token
     token_url: AnyHttpUrl
-    # optional user info endpoint, ex. present in case of github
-    user_url: Optional[AnyHttpUrl] = None
     # url where to find the public keys of the provider to verify the token
     jwks_uri: Optional[AnyHttpUrl] = None
     # public keys of the provider
@@ -34,12 +42,17 @@ class OAuth2ClientBase(OAuth2Provider):
     # get this id from the provider
     client_id: str
     # requested scope from the provider during authentication
-    scope: str
+    scope: Union[str, List[str]]
     # callback url: auth_url redirects here with 'code' and 'state'
     redirect_uri: AnyHttpUrl
     # If it's a JWT token, then it represents 'iss' claim of the
     # received token
     iss: Optional[str] = None
+
+    def requested_scope(self) -> List[str]:
+        if isinstance(self.scope, list):
+            return self.scope.copy()
+        return self.scope.split().copy()
 
 
 class OAuth2LoginClient(OAuth2ClientBase, ABC):
@@ -102,7 +115,11 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    async def authorize(self, code: str, token: StateToken) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
+    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> bool:
+        pass
+
+    @abstractmethod
+    async def authorize(self, code: str, token: StateToken) -> OAuth2AuthentcatedUser:
         """
         Exchange code for access_token and/or id_token
         Return value: (token_grant, user_dict)
@@ -110,9 +127,5 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    def get_email_str(self, user_dict: Dict[str, Any]) -> Optional[str]:
-        pass
-
-    @abstractmethod
-    def get_provider_id(self, user_dict: Dict[str, Any]) -> Optional[str]:
+    def user(self, user_dict: dict, auth_dict: dict) -> OAuth2AuthentcatedUser:
         pass

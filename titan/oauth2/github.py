@@ -1,17 +1,25 @@
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, List
 from urllib.parse import urlencode
 
 import httpx
 from devtools import debug
 from pydantic import AnyHttpUrl, SecretStr
 
-from ..exceptions import JSONDecodeError, Oauth2AuthorizationError
-from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2TokenGrant
+from ..exceptions import (
+    JSONDecodeError,
+    Oauth2AuthorizationError,
+    OAuth2MissingScope,
+    OAuth2EmailPrivdedError,
+    OAuth2MissingInfo,
+)
+from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2AuthentcatedUser
 from .state import StateToken
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+
 GITHUB_USER_URL = "https://api.github.com/user"
+GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
 
 
 class GithubLoginClient(OAuth2LoginClient):
@@ -28,7 +36,6 @@ class GithubLoginClient(OAuth2LoginClient):
         return GithubLoginClient(
             auth_url=GITHUB_AUTH_URL,
             token_url=GITHUB_TOKEN_URL,
-            user_url=GITHUB_USER_URL,
             client_id=client_id,
             scope=scope,
             redirect_uri=redirect_uri,
@@ -99,7 +106,21 @@ class GithubAuthClient(OAuth2AuthClient):
     def get_urlencoded_query_params(self, code: str, token: StateToken) -> str:
         return urlencode(self.get_query_params(code, token))
 
-    async def authorize(self, code: str, token: StateToken) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
+    # https://docs.github.com/en/developers/apps/scopes-for-oauth-apps#normalized-scopes
+    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> Tuple[bool, str]:
+        missing_scope = []
+        if isinstance(granted_scope, str):
+            granted_scope = granted_scope.split()
+        for scope in self.requested_scope():
+            if scope not in granted_scope:
+                if scope in ("read:user", "user:email", "user:follow"):
+                    if "user" not in granted_scope:
+                        missing_scope.append(scope)
+        if len(missing_scope) == 0:
+            return (True, "")
+        return (False, " ".join(missing_scope))
+
+    async def authorize(self, code: str, token: StateToken) -> OAuth2AuthentcatedUser:
         async with httpx.AsyncClient() as client:
             try:
                 params = self.get_query_params(code, token)
@@ -115,25 +136,33 @@ class GithubAuthClient(OAuth2AuthClient):
                 ) from exc
 
             try:
-                auth_response: dict = response.json()
-                debug(auth_response)
+                auth_dict: dict = response.json()
+                debug(auth_dict)
+                debug(auth_dict)
             except Exception as exc:
                 raise JSONDecodeError("Error decoding token reponse (JSON) from github") from exc
 
-            for key in ("access_token", "token_type"):
-                if key not in auth_response:
+            for key in ("access_token", "token_type", "scope"):
+                if key not in auth_dict:
                     raise Oauth2AuthorizationError(f"Missing '{key}' in token reponse from github")
 
-            token_type: str = auth_response.get("token_type")
+            token_type: str = auth_dict.get("token_type")
             if not token_type or token_type.lower() != "bearer":
                 raise Oauth2AuthorizationError(f"{token_type=} != 'bearer' for token response from github")
 
-            # Use the access_token to get the call the user info endpoint
+            ok, missing_scope = self.validate_requested_scope(auth_dict.get("scope"))
+            if not ok:
+                raise OAuth2MissingScope(f"Scope mising from github auth {missing_scope=}")
+
+            headers = {
+                "Authorization": f"token {auth_dict.get('access_token')}",
+                "Accept": "application/vnd.github.v3+json",
+            }
+
+            # call the user info endpoint
             try:
-                access_token = auth_response.get("access_token")
-                headers = {"Authorization": f"token {access_token}"}
-                response = await client.get(str(self.user_url), headers=headers)
-                response.raise_for_status()
+                user_response = await client.get(GITHUB_USER_URL, headers=headers)
+                user_response.raise_for_status()
             except httpx.RequestError as exc:
                 raise Oauth2AuthorizationError(f"Resquest Error for user info from github {exc.request}") from exc
             except httpx.HTTPStatusError as exc:
@@ -142,26 +171,58 @@ class GithubAuthClient(OAuth2AuthClient):
                 ) from exc
 
             try:
-                user_response: dict = response.json()
+                user_dict: dict = user_response.json()
+                debug(user_dict)
             except Exception as exc:
                 raise JSONDecodeError("Error decoding user info reponse (JSON) from github") from exc
 
-            return (OAuth2TokenGrant(**auth_response), user_response)
+            # call the user/emails endpoint
+            try:
+                emails_response = await client.get(GITHUB_EMAILS_URL, headers=headers)
+                emails_response.raise_for_status()
+            except httpx.RequestError as exc:
+                raise Oauth2AuthorizationError(f"Resquest Error for user info from github {exc.request}") from exc
+            except httpx.HTTPStatusError as exc:
+                raise Oauth2AuthorizationError(
+                    f"Response code != 20x for user info from github {exc.response}"
+                ) from exc
 
-    def get_email_str(self, user_dict: Dict[str, Any]) -> str:
-        """
-        user_dict: It's the same dict that is returned by the `authorize` function
-        """
-        email = user_dict.get("email", None)
-        if email and isinstance(email, str) and len(email) >= 3:
-            return email
-        return None
+            try:
+                user_emails: dict = emails_response.json()
+                debug(user_emails)
+            except Exception as exc:
+                raise JSONDecodeError("Error decoding user info reponse (JSON) from github") from exc
 
-    def get_provider_id(self, user_dict: Dict[str, Any]) -> Optional[Union[str, int]]:
-        """
-        user_dict: It's the same dict that is returned by the `authorize` function
-        """
-        provider_id = user_dict.get("id", None)
-        if id and isinstance(id, (str, int)):
-            return provider_id
-        return None
+            email_dict = next(
+                filter(lambda x: isinstance(x, dict) and x.get("primary", False), user_emails),
+                None,
+            )
+            primary_email = user_emails and email_dict.get("email", None)
+
+            # some more verifications of the email can be done
+            if primary_email is None or primary_email == "":
+                raise OAuth2EmailPrivdedError("No primary email found associated wth github account")
+
+            if user_emails[0].get("verified", False) is not True:
+                raise OAuth2EmailPrivdedError(
+                    "Your primary github email='{primary_email}' is not verified. Verify an try again."
+                )
+
+            user_dict.update({"provider_email": primary_email})
+
+            return self.user(user_dict, auth_dict)
+
+    def user(self, user_dict: dict, auth_dict: dict) -> OAuth2AuthentcatedUser:
+        for key in ("id", "login", "email"):
+            if key not in user_dict:
+                raise OAuth2MissingInfo(f"Missing {key=} for user info during github auth")
+
+        return OAuth2AuthentcatedUser(
+            idp=IdP.github,
+            provider_id=user_dict["id"],
+            provider_email=user_dict["provider_email"],
+            provider_username=user_dict["login"],
+            avatar_url=user_dict.get("avatar_url", ""),
+            full_name=user_dict.get("name", ""),
+            provider_creds=auth_dict,
+        )

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, List
 from datetime import datetime, timedelta
 from jose import jwt
 from jose.exceptions import JOSEError
@@ -10,7 +10,7 @@ from ..exceptions import JWTDecodeError, Oauth2AuthorizationError, JSONDecodeErr
 from pydantic import AnyHttpUrl, SecretStr
 from fastapi import HTTPException, status
 
-from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2TokenGrant
+from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2AuthentcatedUser
 from .state import StateToken
 
 # get the values from
@@ -112,6 +112,9 @@ class GoogleAuthClient(OAuth2AuthClient):
     def get_urlencoded_query_params(self, code: str, token: StateToken) -> str:
         return urlencode(self.get_query_params(code, token))
 
+    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> bool:
+        raise NotImplementedError("GoogleAuthClient validate_requested_scope not implemented")
+
     async def update_jwks_keys(self):
         if self.jwks_uri is None:
             raise ValueError("Missing 'jwks_uri' key in GoogleAuthClient")
@@ -180,7 +183,7 @@ class GoogleAuthClient(OAuth2AuthClient):
         except Exception as exc:
             raise Oauth2AuthorizationError(f"Unknown Error during 'id_token' validation for google {exc=}")
 
-    async def authorize(self, code: str, token: StateToken) -> Tuple[OAuth2TokenGrant, Dict[str, Any]]:
+    async def authorize(self, code: str, token: StateToken) -> OAuth2AuthentcatedUser:
         async with httpx.AsyncClient() as client:
             try:
                 params = self.get_query_params(code, token)
@@ -221,23 +224,8 @@ class GoogleAuthClient(OAuth2AuthClient):
         if token.nonce != user_dict.get("nonce", None):
             raise Oauth2AuthorizationError("Error 'nonce' value in the id_token did not match stored value")
 
-        return (OAuth2TokenGrant(**auth_response), user_dict)
+        # return OAuth2AuthentcatedUser
+        raise NotImplementedError()
 
-    def get_email_str(self, user_dict: Dict[str, Any]) -> str:
-        """
-        user_dict: It's the same dict that is returned by the `authorize` function
-        """
-        email = user_dict.get("email", None)
-        if email and isinstance(email, str) and len(email) >= 3:
-            return email
-        return None
-
-    def get_provider_id(self, user_dict: Dict[str, Any]) -> Optional[Union[str, int]]:
-        """
-        user_dict: It's the same dict that is returned by the `authorize` function
-        """
-        # 'sub' claim from decoded JWT id_token
-        provider_id = user_dict.get("sub", None)
-        if id and isinstance(id, (str, int)):
-            return provider_id
-        return None
+    def user(self, user_dict: dict, auth_dict: dict) -> OAuth2AuthentcatedUser:
+        pass
