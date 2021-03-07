@@ -143,10 +143,6 @@ async def auth_callback(
         print(exc)
         raise auth_error
 
-    # ask for email if not present
-    # send a confirmation email
-    # verify the email
-    # activate the account
     user = user_db.get(auth_user)
 
     if user is None:
@@ -157,7 +153,9 @@ async def auth_callback(
 
     debug(user)
 
-    # issue toke claims
+    # send a confirmation email
+    # verify the email
+    # activate the account
     token_claims = TokenClaims(sub=user.uuid.hex, scope=user.scope)
     access_token = token_claims.mint_access_refresh_token(userid=user.uuid.hex, full_name=user.full_name)
     debug(access_token)
