@@ -13,8 +13,8 @@ from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
 from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
-from ..tokens.jwt import AccessRefreshToken, TokenClaims
-from ..exceptions import OAuth2MissingScope
+from ..tokens.jwt import AccessToken, TokenClaims
+from ..exceptions import OAuth2MissingScope, OAuth2MissingInfo
 
 auth_router = APIRouter()
 fake_user_db = UserDB()
@@ -102,7 +102,7 @@ async def auth_url_redirect(
     return RedirectResponse(auth_url)
 
 
-@auth_router.get("/auth", response_model=AccessRefreshToken)
+@auth_router.get("/auth", response_model=AccessToken, response_model_exclude_none=True)
 async def auth_callback(
     request: Request,
     error: Optional[str] = Query(None),
@@ -139,7 +139,7 @@ async def auth_callback(
     try:
         auth_user = await auth_client.authorize(code=code, token=token)
         debug(auth_user)
-    except OAuth2MissingScope as exc:
+    except (OAuth2MissingScope, OAuth2MissingInfo) as exc:
         print(exc)
         raise auth_error
 
@@ -159,6 +159,6 @@ async def auth_callback(
 
     # issue toke claims
     token_claims = TokenClaims(sub=user.uuid.hex, scope=user.scope)
-    access_token = token_claims.mint_access_refresh_token()
+    access_token = token_claims.mint_access_refresh_token(userid=user.uuid.hex, full_name=user.full_name)
     debug(access_token)
     return access_token

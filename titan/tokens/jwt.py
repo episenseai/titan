@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Sequence, Union
 
 from jose import jwt
@@ -17,19 +17,24 @@ class UnverifiedJWTToken(ImmutBaseModel):
 
 class EncodedJWTToken(ImmutBaseModel):
     token: str
+    expires_in: Optional[int] = None
 
 
-class AccessToken(ImmutBaseModel):
+class Token(ImmutBaseModel):
+    pass
+
+
+class AccessToken(Token):
     access_token: str
     token_type: str
+    expires_in: int
+    refresh_token: Optional[str] = None
+    userid: Optional[str] = None
+    full_name: Optional[str] = None
 
 
-class RefreshToken(ImmutBaseModel):
+class RefreshToken(Token):
     refresh_token: str
-
-
-class AccessRefreshToken(AccessToken, RefreshToken):
-    pass
 
 
 # https://tools.ietf.org/html/rfc7519#page-9
@@ -55,10 +60,13 @@ class TokenClaims(ImmutBaseModel):
     def _mint_token(self, ttype: str) -> EncodedJWTToken:
         config = get_jwt_config()
 
+        current_time = datetime.utcnow()
         if ttype == "access_token":
-            exp = datetime.utcnow() + config.authjwt_access_token_expires
+            exp = current_time + config.authjwt_access_token_expires
+            expires_in = int(config.authjwt_access_token_expires / timedelta(seconds=1)) - 10
         elif ttype == "refresh_token":
-            exp = datetime.utcnow() + config.authjwt_refresh_token_expires
+            exp = current_time + config.authjwt_refresh_token_expires
+            expires_in = None
         else:
             raise RuntimeError("Can not issue token")
 
@@ -72,20 +80,34 @@ class TokenClaims(ImmutBaseModel):
             config.get_secret_key("encode"),
             algorithm=config.authjwt_algorithm,
         )
-        return EncodedJWTToken(token=token)
 
-    def mint_access_token(self) -> AccessToken:
+        return EncodedJWTToken(token=token, expires_in=expires_in)
+
+    def mint_access_token(self, userid: Optional[str] = None, full_name: Optional[str] = None) -> AccessToken:
         encoded_token = self._mint_token("access_token")
-        return AccessToken(access_token=encoded_token.token, token_type="Bearer")
+        return AccessToken(
+            access_token=encoded_token.token,
+            token_type="Bearer",
+            expires_in=encoded_token.expires_in,
+            userid=userid,
+            full_name=full_name,
+        )
 
     def mint_refresh_token(self) -> RefreshToken:
         encoded_token = self._mint_token("refresh_token")
         return RefreshToken(refresh_token=encoded_token.token)
 
-    def mint_access_refresh_token(self) -> AccessRefreshToken:
-        atoken = self.mint_access_token()
-        rtoken = self.mint_refresh_token()
-        return AccessRefreshToken(**atoken.dict(), **rtoken.dict())
+    def mint_access_refresh_token(self, userid: Optional[str] = None, full_name: Optional[str] = None) -> AccessToken:
+        atoken = self._mint_token("access_token")
+        rtoken = self._mint_token("refresh_token")
+        return AccessToken(
+            access_token=atoken.token,
+            token_type="Bearer",
+            expires_in=atoken.expires_in,
+            refresh_token=rtoken.token,
+            userid=userid,
+            full_name=full_name,
+        )
 
 
 async def validate_and_get_token_claims_dict(raw_token: UnverifiedJWTToken) -> Optional[dict]:
