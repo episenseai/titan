@@ -71,7 +71,7 @@ class TokenClaims(ImmutBaseModel):
         custom_claims = {}
         custom_claims["ttype"] = ttype
 
-        reserved_claims = {"iss": TOKEN_ISS, "exp": exp, "jti": str(uuid.uuid4())}
+        reserved_claims = {"iss": TOKEN_ISS, "exp": exp, "jti": uuid.uuid4().hex}
 
         token = jwt.encode(
             {**self.dict(exclude_none=True), **custom_claims, **reserved_claims},

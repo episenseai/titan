@@ -1,6 +1,5 @@
 import traceback
 from typing import Optional
-from uuid import uuid4
 
 from devtools import debug
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -13,7 +12,7 @@ from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
 from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
-from ..tokens.jwt import AccessToken, TokenClaims, validate_and_get_token_claims_dict
+from ..tokens.jwt import AccessToken, TokenClaims
 from ..exceptions import OAuth2MissingScope, OAuth2MissingInfo
 
 auth_router = APIRouter()
