@@ -1,3 +1,4 @@
+import traceback
 from typing import Optional
 from uuid import uuid4
 
@@ -64,8 +65,6 @@ def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
         return github_login_client
     elif p == IdP.google:
         return google_login_client
-    else:
-        raise NotImplementedError()
 
 
 def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
@@ -73,8 +72,6 @@ def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
         return github_auth_client
     if p == IdP.google:
         return google_auth_client
-    else:
-        raise NotImplementedError()
 
 
 def get_user_db() -> UserDB:
@@ -88,13 +85,11 @@ async def auth_url_redirect(
     state_token_db: StateTokenDB = Depends(get_state_token_db),
 ):
     try:
-        from devtools import debug
 
         debug(token, login_client, state_token_db)
         auth_url = login_client.create_auth_url(token)
         state_token_db.store(token)
     except Exception as ex:
-        import traceback
 
         traceback.print_exc(ex)
         print(ex)
