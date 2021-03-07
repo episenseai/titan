@@ -13,7 +13,7 @@ from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
 from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
-from ..tokens.jwt import AccessToken, TokenClaims
+from ..tokens.jwt import AccessToken, TokenClaims, validate_and_get_token_claims_dict
 from ..exceptions import OAuth2MissingScope, OAuth2MissingInfo
 
 auth_router = APIRouter()
@@ -161,4 +161,5 @@ async def auth_callback(
     token_claims = TokenClaims(sub=user.uuid.hex, scope=user.scope)
     access_token = token_claims.mint_access_refresh_token(userid=user.uuid.hex, full_name=user.full_name)
     debug(access_token)
+
     return access_token

@@ -11,10 +11,6 @@ from ..models import ImmutBaseModel
 from .config import get_jwt_config
 
 
-class UnverifiedJWTToken(ImmutBaseModel):
-    token: str
-
-
 class EncodedJWTToken(ImmutBaseModel):
     token: str
     expires_in: Optional[int] = None
@@ -37,12 +33,14 @@ class RefreshToken(Token):
     refresh_token: str
 
 
+TOKEN_ISS = "https://episense.ai"
+
 # https://tools.ietf.org/html/rfc7519#page-9
 class TokenClaims(ImmutBaseModel):
     # subject
     sub: Union[StrictStr, StrictInt]
     # issuer
-    iss: Optional[Union[StrictStr, StrictInt]] = None
+    iss: Optional[Union[StrictStr, StrictInt]]
     # audience
     aud: Optional[Union[StrictStr, Sequence[StrictStr]]] = None
     # scope
@@ -73,7 +71,7 @@ class TokenClaims(ImmutBaseModel):
         custom_claims = {}
         custom_claims["ttype"] = ttype
 
-        reserved_claims = {"exp": exp, "jti": str(uuid.uuid4())}
+        reserved_claims = {"iss": TOKEN_ISS, "exp": exp, "jti": str(uuid.uuid4())}
 
         token = jwt.encode(
             {**self.dict(exclude_none=True), **custom_claims, **reserved_claims},
@@ -110,15 +108,21 @@ class TokenClaims(ImmutBaseModel):
         )
 
 
-async def validate_and_get_token_claims_dict(raw_token: UnverifiedJWTToken) -> Optional[dict]:
+async def validate_and_get_token_claims_dict(raw_token: str) -> Optional[dict]:
     config = get_jwt_config()
 
     try:
         decoded_token = jwt.decode(
-            raw_token.token,
+            raw_token,
             config.get_secret_key("decode"),
-            algorithm=config.authjwt_algorithm,
-            options={"require_exp": True, "require_sub": True, "require_jti": True},
+            algorithms=config.authjwt_algorithm,
+            options={
+                "require_exp": True,
+                "require_sub": True,
+                "require_jti": True,
+                "require_iss": True,
+            },
+            issuer=TOKEN_ISS,
         )
         return decoded_token
     except (JWTError, JOSEError):
