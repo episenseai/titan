@@ -13,7 +13,7 @@ from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
 from ..tokens.jwt import AccessToken, TokenClaims
-from ..exceptions import OAuth2MissingScope, OAuth2MissingInfo
+from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingScope, OAuth2MissingInfo
 
 auth_router = APIRouter()
 fake_user_db = UserDB()
@@ -138,7 +138,7 @@ async def auth_callback(
     try:
         auth_user = await auth_client.authorize(code=code, token=token)
         debug(auth_user)
-    except (OAuth2MissingScope, OAuth2MissingInfo) as exc:
+    except (OAuth2MissingScope, OAuth2MissingInfo, OAuth2EmailPrivdedError) as exc:
         print(exc)
         raise auth_error
 
