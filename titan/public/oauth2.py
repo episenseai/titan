@@ -156,7 +156,9 @@ async def auth_callback(
     # verify the email
     # activate the account
     token_claims = TokenClaims(sub=user.uuid.hex, scope=user.scope)
-    access_token = token_claims.mint_access_refresh_token(userid=user.uuid.hex, full_name=user.full_name)
+    access_token = token_claims.mint_access_refresh_token(
+        userid=user.uuid.hex, full_name=user.full_name, u=token.uistate
+    )
     debug(access_token)
 
     return access_token

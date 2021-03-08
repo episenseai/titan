@@ -27,6 +27,8 @@ class AccessToken(Token):
     refresh_token: Optional[str] = None
     userid: Optional[str] = None
     full_name: Optional[str] = None
+    # some user state that was supplied at the start of the login flow
+    u: Optional[str] = None
 
 
 class RefreshToken(Token):
