@@ -5,10 +5,16 @@ from jose.exceptions import JOSEError
 from devtools import debug
 from urllib.parse import urlencode
 import httpx
-from ..exceptions import JWTDecodeError, Oauth2AuthorizationError, JSONDecodeError
+from ..exceptions import (
+    JWTDecodeError,
+    Oauth2AuthorizationError,
+    JSONDecodeError,
+    OAuth2MissingScope,
+    OAuth2MissingInfo,
+    OAuth2EmailPrivdedError,
+)
 
 from pydantic import AnyHttpUrl, SecretStr
-from fastapi import HTTPException, status
 
 from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2AuthentcatedUser
 from .state import StateToken
@@ -97,7 +103,7 @@ class GoogleAuthClient(OAuth2AuthClient):
 
     @property
     def idp(self) -> IdP:
-        return IdP.github
+        return IdP.google
 
     def get_query_params(self, code: str, token: StateToken) -> Dict[str, Any]:
         url_params = {
@@ -111,9 +117,6 @@ class GoogleAuthClient(OAuth2AuthClient):
 
     def get_urlencoded_query_params(self, code: str, token: StateToken) -> str:
         return urlencode(self.get_query_params(code, token))
-
-    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> bool:
-        raise NotImplementedError("GoogleAuthClient validate_requested_scope not implemented")
 
     async def update_jwks_keys(self):
         if self.jwks_uri is None:
@@ -183,6 +186,21 @@ class GoogleAuthClient(OAuth2AuthClient):
         except Exception as exc:
             raise Oauth2AuthorizationError(f"Unknown Error during 'id_token' validation for google {exc=}")
 
+    # https://developers.google.com/identity/protocols/oauth2/scopes#openid_connect
+    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> Tuple[bool, str]:
+        missing_scope = []
+        if isinstance(granted_scope, str):
+            granted_scope = granted_scope.split()
+        for scope in self.requested_scope():
+            if scope not in granted_scope:
+                if (scope == "https://www.googleapis.com/auth/userinfo.email" and "email" not in granted_scope) or (
+                    scope == "https://www.googleapis.com/auth/userinfo.profile" and "profile" not in granted_scope
+                ):
+                    missing_scope.append(scope)
+        if not missing_scope:
+            return (True, "")
+        return (False, " ".join(missing_scope))
+
     async def authorize(self, code: str, token: StateToken) -> OAuth2AuthentcatedUser:
         async with httpx.AsyncClient() as client:
             try:
@@ -198,34 +216,82 @@ class GoogleAuthClient(OAuth2AuthClient):
                 ) from exc
 
         try:
-            auth_response: dict = response.json()
-            debug(auth_response)
+            auth_dict: dict = response.json()
+            debug(auth_dict)
         except Exception as exc:
-            raise JSONDecodeError("Error decoding token reponse (JSON) from github") from exc
+            raise JSONDecodeError("Error decoding token reponse (JSON) from google") from exc
 
         for key in ("access_token", "token_type", "scope", "expires_in"):
-            if key not in auth_response:
-                raise Oauth2AuthorizationError(f"Missing '{key}' in token reponse from github")
+            if key not in auth_dict:
+                raise Oauth2AuthorizationError(f"Missing '{key}' in token reponse from google")
 
-        token_type: str = auth_response.get("token_type")
+        token_type: str = auth_dict.get("token_type")
         if not token_type or token_type.lower() != "bearer":
             raise Oauth2AuthorizationError(f"{token_type=} != 'bearer' for token response from google")
+
+        ok, missing_scope = self.validate_requested_scope(auth_dict.get("scope"))
+        if not ok:
+            raise OAuth2MissingScope(f"Scope mising from google auth {missing_scope=}")
 
         user_dict = {}
 
         # nonce parameter is present for OpenId Connect
         if token.nonce is not None:
-            id_token = auth_response.get("id_token", None)
+            id_token = auth_dict.get("id_token", None)
             if id_token is None:
                 raise Oauth2AuthorizationError("Missing 'id_token' in auth_response from google")
             else:
-                access_token = auth_response.get("access_token")
+                access_token = auth_dict.get("access_token")
                 user_dict = await self.validate_id_token(id_token, access_token)
         if token.nonce != user_dict.get("nonce", None):
             raise Oauth2AuthorizationError("Error 'nonce' value in the id_token did not match stored value")
 
-        # return OAuth2AuthentcatedUser
-        raise NotImplementedError()
+        primary_email = user_dict.get("email") or ""
+        if user_dict.get("email_verified", False) is not True:
+            raise OAuth2EmailPrivdedError(
+                f"Your primary github email='{primary_email}' is not verified. Verify an try again."
+            )
+
+        return self.user(user_dict, auth_dict)
 
     def user(self, user_dict: dict, auth_dict: dict) -> OAuth2AuthentcatedUser:
-        pass
+        """
+        user_dict: {
+            'iss': 'https://accounts.google.com',
+            'azp': 'xxxxxxxxxxxx-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com',
+            'aud': 'xxxxxxxxxxxx-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com',
+            'sub': '117179329109786909605',
+            'email': 'sushant.mithila89@gmail.com',
+            'email_verified': True,
+            'at_hash': 'pzMAnE_HNlI_qpLHZrijtw',
+            'nonce': 'jeCk1aC0XxEhOQZxuLxLXPclFiB4EVU1e4g3auV0ioXBevUP',
+            'name': 'Sushant Kumar',
+            'picture': 'https://lh3.googleusercontent.com/a-/AOh14GhZ3sVR6Jwzx6UmP-ytYGYok-DlQ7By9oCrGz-aqA=s96-c',
+            'given_name': 'Sushant',
+            'family_name': 'Kumar',
+            'locale': 'en',
+            'iat': 1615159453,
+            'exp': 1615163053,
+        }
+        """
+        for key in ("sub", "email"):
+            if key not in user_dict:
+                raise OAuth2MissingInfo(f"Missing {key=} for user info during google auth")
+        full_name = user_dict.get("name", "")
+        if not full_name:
+            given_name = user_dict.get("given_name", "")
+            family_name = user_dict.get("family_name", "")
+            if given_name:
+                full_name = family_name
+            if family_name:
+                full_name = full_name + " " + family_name
+            full_name = full_name.strip()
+
+        return OAuth2AuthentcatedUser(
+            idp=self.idp,
+            provider_id=user_dict["sub"],
+            provider_email=user_dict["email"],
+            avatar_url=user_dict.get("picture", ""),
+            full_name=full_name,
+            provider_creds=auth_dict,
+        )

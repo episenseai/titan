@@ -116,7 +116,7 @@ class GithubAuthClient(OAuth2AuthClient):
                 if scope in ("read:user", "user:email", "user:follow"):
                     if "user" not in granted_scope:
                         missing_scope.append(scope)
-        if len(missing_scope) == 0:
+        if not missing_scope:
             return (True, "")
         return (False, " ".join(missing_scope))
 
@@ -205,7 +205,7 @@ class GithubAuthClient(OAuth2AuthClient):
 
             if user_emails[0].get("verified", False) is not True:
                 raise OAuth2EmailPrivdedError(
-                    "Your primary github email='{primary_email}' is not verified. Verify an try again."
+                    f"Your primary github email='{primary_email}' is not verified. Verify an try again."
                 )
 
             user_dict.update({"provider_email": primary_email})
@@ -218,7 +218,7 @@ class GithubAuthClient(OAuth2AuthClient):
                 raise OAuth2MissingInfo(f"Missing {key=} for user info during github auth")
 
         return OAuth2AuthentcatedUser(
-            idp=IdP.github,
+            idp=self.idp,
             provider_id=user_dict["id"],
             provider_email=user_dict["provider_email"],
             provider_username=user_dict["login"],

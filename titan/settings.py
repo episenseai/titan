@@ -12,7 +12,9 @@ GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
 GITHUB_CLIENT_SECRET = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"
 
 
-GOOGLE_CLIENT_SCOPE = "openid profile email"
+GOOGLE_CLIENT_SCOPE = (
+    "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+)
 ### GET THESE FROM THE **ENV***
 GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "WmUcqKFLcbiYSqghIIuUi4Hb"
