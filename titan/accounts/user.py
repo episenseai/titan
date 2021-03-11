@@ -1,9 +1,9 @@
 from datetime import datetime
 from uuid import uuid4
-from typing import Optional, Union
+from typing import Optional
 
 from passlib.context import CryptContext
-from pydantic import UUID4, EmailStr
+from pydantic import UUID4
 
 from ..models import ImmutBaseModel
 from ..oauth2.models import IdP, OAuth2AuthentcatedUser
