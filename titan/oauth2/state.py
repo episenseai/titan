@@ -24,7 +24,7 @@ class StateToken(ImmutBaseModel):
     # starting the login flow. This can be recovered, once the
     # Login is successfull, by sending the state back to the
     # frontend.
-    uistate: str
+    uistate: Optional[str] = None
     idp: IdP
     created_at: datetime
 
@@ -44,7 +44,7 @@ class StateToken(ImmutBaseModel):
         return state
 
     @classmethod
-    def mint(cls, idp: IdP, uistate: str, with_nonce: bool = False) -> "StateToken":
+    def mint(cls, idp: IdP, uistate: Optional[str] = None, with_nonce: bool = False) -> "StateToken":
         state = cls.gen_state()
         if with_nonce:
             nonce = cls.gen_state()

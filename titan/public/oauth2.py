@@ -6,17 +6,16 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
-from ..accounts.user import UserDB
+from ..accounts.user import create_user, get_user
+from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
 from ..oauth2.github import GithubAuthClient, GithubLoginClient
 from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
 from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
 from ..tokens.jwt import AccessToken, TokenClaims
-from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingScope, OAuth2MissingInfo
 
 auth_router = APIRouter()
-fake_user_db = UserDB()
 fake_state_token_db = StateTokenDB()
 
 github_login_client = GithubLoginClient.new(
@@ -48,7 +47,7 @@ google_auth_client = GoogleAuthClient.new(
 )
 
 
-def mint_state_token(p: IdP = Query(...), u: str = Query("")):
+def mint_state_token(p: IdP = Query(...), u: Optional[str] = Query(None)):
     if p == IdP.google:
         with_nonce = True
     else:
@@ -72,10 +71,6 @@ def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
         return github_auth_client
     if p == IdP.google:
         return google_auth_client
-
-
-def get_user_db() -> UserDB:
-    return fake_user_db
 
 
 @auth_router.get("/login")
@@ -109,7 +104,6 @@ async def auth_callback(
     state: Optional[str] = Query(None),
     scope: Optional[str] = Query(None),
     state_token_db: StateTokenDB = Depends(get_state_token_db),
-    user_db: UserDB = Depends(get_user_db),
 ):
     auth_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -142,23 +136,24 @@ async def auth_callback(
         print(exc)
         raise auth_error
 
-    user = user_db.get(auth_user)
+    user = await get_user(auth_user.email)
 
     if user is None:
-        user_db.create_user(auth_user)
-        user = user_db.get(auth_user)
+        await create_user(auth_user, disabled=False, email_verified=False)
+        user = await get_user(auth_user.email)
     if user is None:
         raise auth_error
+    if user.idp != token.idp:
+        raise auth_error
+    # update user info if needed after every login
 
     debug(user)
 
     # send a confirmation email
     # verify the email
     # activate the account
-    token_claims = TokenClaims(sub=user.uuid.hex, scope=user.scope)
-    access_token = token_claims.mint_access_refresh_token(
-        userid=user.uuid.hex, full_name=user.full_name, u=token.uistate
-    )
+    token_claims = TokenClaims(sub=str(user.guid), scope=user.scope)
+    access_token = token_claims.mint_access_refresh_token(user=user, token=token)
     debug(access_token)
 
     return access_token

@@ -199,6 +199,7 @@ class GoogleAuthClient(OAuth2AuthClient):
                     missing_scope.append(scope)
         if not missing_scope:
             return (True, "")
+        print("missing_scope....................")
         return (False, " ".join(missing_scope))
 
     async def authorize(self, code: str, token: StateToken) -> OAuth2AuthentcatedUser:
@@ -277,21 +278,21 @@ class GoogleAuthClient(OAuth2AuthClient):
         for key in ("sub", "email"):
             if key not in user_dict:
                 raise OAuth2MissingInfo(f"Missing {key=} for user info during google auth")
-        full_name = user_dict.get("name", "")
-        if not full_name:
-            given_name = user_dict.get("given_name", "")
-            family_name = user_dict.get("family_name", "")
-            if given_name:
-                full_name = family_name
-            if family_name:
+        full_name = user_dict.get("name", None)
+        if full_name is None:
+            given_name = user_dict.get("given_name", None)
+            family_name = user_dict.get("family_name", None)
+            if given_name is not None:
+                full_name = given_name
+            if family_name is not None:
                 full_name = full_name + " " + family_name
             full_name = full_name.strip()
 
         return OAuth2AuthentcatedUser(
-            idp=self.idp,
-            provider_id=user_dict["sub"],
-            provider_email=user_dict["email"],
-            avatar_url=user_dict.get("picture", ""),
+            email=user_dict["email"],
             full_name=full_name,
+            picture=user_dict.get("picture", None),
+            idp=self.idp,
+            idp_guid=user_dict["sub"],
             provider_creds=auth_dict,
         )

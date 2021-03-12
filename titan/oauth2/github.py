@@ -110,7 +110,7 @@ class GithubAuthClient(OAuth2AuthClient):
     def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> Tuple[bool, str]:
         missing_scope = []
         if isinstance(granted_scope, str):
-            granted_scope = granted_scope.split()
+            granted_scope = granted_scope.split(",")
         for scope in self.requested_scope():
             if scope not in granted_scope:
                 if scope in ("read:user", "user:email", "user:follow"):
@@ -218,11 +218,11 @@ class GithubAuthClient(OAuth2AuthClient):
                 raise OAuth2MissingInfo(f"Missing {key=} for user info during github auth")
 
         return OAuth2AuthentcatedUser(
+            email=user_dict["provider_email"],
+            full_name=user_dict.get("name", None),
+            picture=user_dict.get("avatar_url", ""),
             idp=self.idp,
-            provider_id=user_dict["id"],
-            provider_email=user_dict["provider_email"],
-            provider_username=user_dict["login"],
-            avatar_url=user_dict.get("avatar_url", ""),
-            full_name=user_dict.get("name", ""),
+            idp_guid=user_dict["id"],
+            idp_username=user_dict["login"],
             provider_creds=auth_dict,
         )

@@ -9,6 +9,8 @@ from pydantic.types import StrictInt, StrictStr
 
 from ..models import ImmutBaseModel
 from .config import get_jwt_config
+from ..oauth2.state import StateToken
+from ..accounts.user import UserInDB
 
 
 class EncodedJWTToken(ImmutBaseModel):
@@ -25,8 +27,9 @@ class AccessToken(Token):
     token_type: str
     expires_in: int
     refresh_token: Optional[str] = None
-    userid: Optional[str] = None
+    guid: Optional[str] = None
     full_name: Optional[str] = None
+    picture: Optional[str] = None
     # some user state that was supplied at the start of the login flow
     u: Optional[str] = None
 
@@ -83,30 +86,50 @@ class TokenClaims(ImmutBaseModel):
 
         return EncodedJWTToken(token=token, expires_in=expires_in)
 
-    def mint_access_token(self, userid: Optional[str] = None, full_name: Optional[str] = None) -> AccessToken:
+    def mint_access_token(
+        self,
+        user: UserInDB,
+        token: Optional[StateToken] = None,
+    ) -> AccessToken:
         encoded_token = self._mint_token("access_token")
+        if token:
+            u = token.uistate
+        else:
+            u = None
         return AccessToken(
             access_token=encoded_token.token,
             token_type="Bearer",
             expires_in=encoded_token.expires_in,
-            userid=userid,
-            full_name=full_name,
+            guid=str(user.guid),
+            full_name=user.full_name,
+            picture=user.picture,
+            u=u,
         )
 
     def mint_refresh_token(self) -> RefreshToken:
         encoded_token = self._mint_token("refresh_token")
         return RefreshToken(refresh_token=encoded_token.token)
 
-    def mint_access_refresh_token(self, userid: Optional[str] = None, full_name: Optional[str] = None) -> AccessToken:
+    def mint_access_refresh_token(
+        self,
+        user: UserInDB,
+        token: Optional[StateToken] = None,
+    ) -> AccessToken:
         atoken = self._mint_token("access_token")
         rtoken = self._mint_token("refresh_token")
+        if token:
+            u = token.uistate
+        else:
+            u = None
         return AccessToken(
             access_token=atoken.token,
             token_type="Bearer",
             expires_in=atoken.expires_in,
             refresh_token=rtoken.token,
-            userid=userid,
-            full_name=full_name,
+            guid=str(user.guid),
+            full_name=user.full_name,
+            picture=user.picture,
+            u=u,
         )
 
 

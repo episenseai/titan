@@ -18,13 +18,13 @@ class OAuth2AuthentcatedCreds(ImmutBaseModel):
 
 
 class OAuth2AuthentcatedUser(ImmutBaseModel):
+    email: str
+    full_name: Optional[str] = None
+    picture: Optional[str] = None
     idp: IdP
-    provider_id: str
-    provider_email: str
-    provider_username: str = ""
-    full_name: str = ""
-    avatar_url: str = ""
-    provider_creds: OAuth2AuthentcatedCreds
+    idp_guid: str
+    idp_username: Optional[str] = None
+    provider_creds: Optional[OAuth2AuthentcatedCreds] = None
 
 
 class OAuth2Provider(ImmutBaseModel):

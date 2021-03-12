@@ -6,7 +6,7 @@ from .models import ImmutBaseModel
 
 AUTH_REDIRECT_URI = "http://localhost:8000/auth"
 
-GITHUB_CLIENT_SCOPE = "user:email"
+GITHUB_CLIENT_SCOPE = "read:user user:email"
 ### GET THESE FROM THE **ENV***
 GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
 GITHUB_CLIENT_SECRET = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"

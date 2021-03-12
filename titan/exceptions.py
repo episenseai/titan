@@ -64,3 +64,7 @@ class OAuth2EmailPrivdedError(AuthException):
 
 class OAuth2MissingInfo(AuthException):
     pass
+
+
+class DatabaseUserFetchError(AuthException):
+    pass

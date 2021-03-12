@@ -1,23 +1,24 @@
 from databases import Database
 import asyncio
 import sqlalchemy
-from .schema import users
+from .schema import users_table
 
 # from sqlalchemy.dialects import postgresql
 
-
-# compiled CREATE TABLE statement
-# print(str(sqlalchemy.schema.CreateTable(users).compile(dialect=postgresql.dialect())))
 
 database = Database("postgresql://localhost/testdb")
 
 
 async def setup_users_table(database: Database):
+    """
+    compiled CREATE TABLE statement
+    >>> print(str(sqlalchemy.schema.CreateTable(users).compile(dialect=postgresql.dialect())))
+    """
     async with database as db:
         uuid_enable_query = '''CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'''
         await db.execute(query=uuid_enable_query)
 
-        create_table_query = sqlalchemy.schema.CreateTable(users)
+        create_table_query = sqlalchemy.schema.CreateTable(users_table)
         await db.execute(query=create_table_query)
 
 
