@@ -10,7 +10,7 @@ from sqlalchemy.dialects import postgresql
 from ..models import ImmutBaseModel
 from ..oauth2.models import IdP
 
-# https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Column
+
 def users_schema(table_name: str):
     """
     (email) is the primary key of this table
@@ -21,6 +21,7 @@ def users_schema(table_name: str):
     """
     metadata = sqlalchemy.MetaData()
 
+    # https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Column
     return sqlalchemy.Table(
         table_name,
         metadata,
