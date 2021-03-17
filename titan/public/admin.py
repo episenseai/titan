@@ -2,6 +2,8 @@ from devtools import debug
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
+from ..admindb import admin_db
+
 admin_router = APIRouter(prefix="/x", tags=["x"])
 
 oauth2_bearer_token = OAuth2PasswordBearer(tokenUrl="/x/token")
