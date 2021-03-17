@@ -8,7 +8,7 @@ from pydantic import UUID4
 from ..exceptions import DatabaseUserFetchError
 from ..models import ImmutBaseModel
 from ..oauth2.models import IdP, OAuth2AuthentcatedUser
-from .schema import users_table
+from .schema import users_schema
 
 # from passlib.context import CryptContext
 
@@ -19,6 +19,7 @@ from .schema import users_table
 
 # connect with database on app startup and disconnect on shutdown
 database = Database("postgresql://localhost/testdb")
+users_table = users_schema(table_name="users")
 
 
 class UserInDB(ImmutBaseModel):
