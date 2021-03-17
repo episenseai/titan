@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
-from ..accounts.user import create_user, get_user
 from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
 from ..oauth2.github import GithubAuthClient, GithubLoginClient
 from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
@@ -14,6 +13,7 @@ from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
 from ..oauth2.state import StateToken, StateTokenDB
 from ..settings import get_oauth2_settings
 from ..tokens.jwt import AccessToken, TokenClaims
+from ..userdb import user_db
 
 auth_router = APIRouter()
 fake_state_token_db = StateTokenDB()
@@ -136,11 +136,11 @@ async def auth_callback(
         print(exc)
         raise auth_error
 
-    user = await get_user(auth_user.email)
+    user = await user_db.get_user(auth_user.email)
 
     if user is None:
-        await create_user(auth_user, disabled=False, email_verified=False)
-        user = await get_user(auth_user.email)
+        await user_db.create_user(auth_user, disabled=False, email_verified=False)
+        user = await user_db.get_user(auth_user.email)
     if user is None:
         raise auth_error
     if user.idp != token.idp:
