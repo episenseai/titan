@@ -42,3 +42,9 @@ def get_oauth2_settings() -> OAuth2Settings:
 
 
 get_oauth2_settings()
+
+USERS_DB_URL = "postgresql://localhost/testdb"
+USERS_TABLE_NAME = "users"
+
+ADMINS_DB_URL = "postgresql://localhost/testdb"
+ADMINS_TABLE_NAME = "admins"

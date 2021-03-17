@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-from uuid import uuid4
 
 from databases import Database
 from pydantic import UUID4
@@ -9,17 +8,12 @@ from ..exceptions import DatabaseUserFetchError
 from ..models import ImmutBaseModel
 from ..oauth2.models import IdP, OAuth2AuthentcatedUser
 from .schema import users_schema
-
-# from passlib.context import CryptContext
-
-# ["auto"] will configure the CryptContext instance to deprecate all
-# supported schemes except for the default scheme.
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
+from ..settings import USERS_DB_URL, USERS_TABLE_NAME
 
 
 # connect with database on app startup and disconnect on shutdown
-database = Database("postgresql://localhost/testdb")
-users_table = users_schema(table_name="users")
+database = Database(USERS_DB_URL)
+users_table = users_schema(table_name=USERS_TABLE_NAME)
 
 
 class UserInDB(ImmutBaseModel):
@@ -58,14 +52,14 @@ async def get_user(email: str) -> Optional[UserInDB]:
     query = users_table.select().where(
         users_table.columns.email == email,
     )
-    # returns None if the user if not in db
+    # returns None if the user is not in DB
     user = await database.fetch_one(query=query)
 
     if user is not None:
         try:
             return UserInDB(**user)
         except Exception as exc:
-            print(f"Can convert {user=} for {email=}")
+            print(f"Error {user=} for {email=}")
             raise DatabaseUserFetchError from exc
     return None
 
@@ -122,28 +116,3 @@ if __name__ == "__main__":
 
     asyncio.get_event_loop().run_until_complete(get())
 """
-
-
-class UserDB:
-    def __init__(self):
-        self.db = {}
-
-    def get(self, auth_user: OAuth2AuthentcatedUser) -> UserInDB:
-        return self.db.get((auth_user.provider_id, auth_user.idp), None)
-
-    def create_user(self, auth_user: OAuth2AuthentcatedUser) -> UserInDB:
-        uuid = uuid4()
-        current_datettime = datetime.utcnow()
-        default_scope = "episense:demo"
-
-        user = UserInDB(
-            **auth_user.dict(),
-            uuid=uuid,
-            disabled=False,
-            scope=default_scope,
-            created_at=current_datettime,
-            updated_at=current_datettime,
-            email_verified=False,
-        )
-        self.db[(auth_user.provider_id, auth_user.idp)] = user
-        return user

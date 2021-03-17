@@ -5,3 +5,4 @@
 - exception handlers in fastapi
 - logging support
 - remove state token after a certain period of time
+- sanitize all db inputs
