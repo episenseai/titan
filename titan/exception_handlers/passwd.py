@@ -1,10 +1,12 @@
-from fastapi import status
-from fastapi.responses import ORJSONResponse
-from fastapi.encoders import jsonable_encoder
-from passlib.exc import PasswordValueError, PasswordSizeError, PasswordTruncateError
-from ..exceptions import Oauth2AuthorizationError
 from traceback import print_exc
+
 from devtools import debug
+from fastapi import status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import ORJSONResponse
+from passlib.exc import PasswordSizeError, PasswordTruncateError, PasswordValueError
+
+from ..exceptions import Oauth2AuthorizationError
 
 
 async def bcrypt_password_error(request, exc):

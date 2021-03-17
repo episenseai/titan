@@ -92,6 +92,10 @@ async def create_user(user: OAuth2AuthentcatedUser, disabled: bool = False, emai
     await database.execute(query=query, values=values)
 
 
+async def update_user():
+    pass
+
+
 """
 if __name__ == "__main__":
     async def insert():

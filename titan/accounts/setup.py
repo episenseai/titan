@@ -1,6 +1,8 @@
-from databases import Database
 import asyncio
+
 import sqlalchemy
+from databases import Database
+
 from .schema import users_table
 
 # from sqlalchemy.dialects import postgresql

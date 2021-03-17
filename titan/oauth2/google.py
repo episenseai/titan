@@ -1,22 +1,22 @@
-from typing import Any, Dict, Optional, Tuple, Union, List
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple, Union
+from urllib.parse import urlencode
+
+import httpx
+from devtools import debug
 from jose import jwt
 from jose.exceptions import JOSEError
-from devtools import debug
-from urllib.parse import urlencode
-import httpx
-from ..exceptions import (
-    JWTDecodeError,
-    Oauth2AuthorizationError,
-    JSONDecodeError,
-    OAuth2MissingScope,
-    OAuth2MissingInfo,
-    OAuth2EmailPrivdedError,
-)
-
 from pydantic import AnyHttpUrl, SecretStr
 
-from .models import IdP, OAuth2AuthClient, OAuth2LoginClient, OAuth2AuthentcatedUser
+from ..exceptions import (
+    JSONDecodeError,
+    JWTDecodeError,
+    Oauth2AuthorizationError,
+    OAuth2EmailPrivdedError,
+    OAuth2MissingInfo,
+    OAuth2MissingScope,
+)
+from .models import IdP, OAuth2AuthClient, OAuth2AuthentcatedUser, OAuth2LoginClient
 from .state import StateToken
 
 # get the values from
