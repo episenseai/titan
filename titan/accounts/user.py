@@ -37,14 +37,7 @@ class UserDB:
         basic_scope = "episense:demo"
         query = self.table.insert()
         values = user.dict(
-            include={
-                "email",
-                "full_name",
-                "picture",
-                "idp",
-                "idp_guid",
-                "idp_username",
-            },
+            include={"email", "full_name", "picture", "idp", "idp_guid", "idp_username"},
         )
         values.update(
             {
@@ -57,30 +50,3 @@ class UserDB:
 
     async def update_user(self):
         pass
-
-
-"""
-if __name__ == "__main__":
-    async def insert():
-        user_dict = {
-            "email": "test55@example.com",
-            "full_name": "Test User",
-            "picture": "https://google.com",
-            "idp": "google",
-            "idp_guid": "q6cg67fcq2gcuqg",
-        }
-        async with database as database:
-            user = OAuth2AuthentcatedUser(**user_dict)
-            await create_user(user=user)
-
-    async def get():
-        async with database as database:
-            user = await get_user(email="test55@example.com")
-            from devtools import debug
-
-            debug(user)
-
-    import asyncio
-
-    asyncio.get_event_loop().run_until_complete(get())
-"""
