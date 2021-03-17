@@ -25,10 +25,10 @@ class UserInDB(ImmutBaseModel):
     # given_name + family_name
     full_name: Optional[str] = None
     # Account is disabled or not.
-    disabled: bool = False
+    disabled: bool
     # Did we verify the email ourselves. We are creating accounts
     # ony when the email is verified by the provider.
-    email_verified: bool = False
+    email_verified: bool
     # Granted oauth2 `scope` to the user on our platform.
     scope: str = ""
     # profile picture if available.
