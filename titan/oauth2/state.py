@@ -64,6 +64,12 @@ class StateTokenDB:
     def __init__(self):
         self.db = {}
 
+    async def connect(self):
+        pass
+
+    async def disconnect(self):
+        pass
+
     def store(self, token: StateToken):
         self.db[token.state] = token
 

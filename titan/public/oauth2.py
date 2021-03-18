@@ -1,97 +1,49 @@
-import traceback
 from typing import Optional
 
 from devtools import debug
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
+from ..client import github_auth_client, github_login_client, google_auth_client, google_login_client
 from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
-from ..oauth2.github import GithubAuthClient, GithubLoginClient
-from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
-from ..oauth2.models import IdP, OAuth2AuthClient, OAuth2LoginClient
-from ..oauth2.state import StateToken, StateTokenDB
-from ..settings import get_oauth2_settings
+from ..oauth2.models import IdP
+from ..oauth2.state import StateToken
+from ..statedb import state_token_db
 from ..tokens.jwt import AccessToken, TokenClaims
 from ..userdb import user_db
 
 auth_router = APIRouter()
-fake_state_token_db = StateTokenDB()
-
-github_login_client = GithubLoginClient.new(
-    client_id=get_oauth2_settings().github_client_id,
-    scope=get_oauth2_settings().github_client_scope,
-    redirect_uri=get_oauth2_settings().github_redirect_uri,
-)
-
-github_auth_client = GithubAuthClient.new(
-    client_id=get_oauth2_settings().github_client_id,
-    scope=get_oauth2_settings().github_client_scope,
-    redirect_uri=get_oauth2_settings().github_redirect_uri,
-    client_secret=get_oauth2_settings().github_client_secret,
-)
-
-google_login_client = GoogleLoginClient.new(
-    client_id=get_oauth2_settings().google_client_id,
-    scope=get_oauth2_settings().google_client_scope,
-    redirect_uri=get_oauth2_settings().google_redirect_uri,
-    iss=get_oauth2_settings().google_client_iss,
-)
-
-google_auth_client = GoogleAuthClient.new(
-    client_id=get_oauth2_settings().google_client_id,
-    scope=get_oauth2_settings().google_client_scope,
-    redirect_uri=get_oauth2_settings().google_redirect_uri,
-    client_secret=get_oauth2_settings().google_client_secret,
-    iss=get_oauth2_settings().google_client_iss,
-)
-
-
-def mint_state_token(p: IdP = Query(...), u: Optional[str] = Query(None)):
-    if p == IdP.google:
-        with_nonce = True
-    else:
-        with_nonce = False
-    return StateToken.mint(idp=p, uistate=u, with_nonce=with_nonce)
-
-
-def get_state_token_db() -> StateTokenDB:
-    return fake_state_token_db
-
-
-def get_login_client(p: IdP = Query(...)) -> OAuth2LoginClient:
-    if p == IdP.github:
-        return github_login_client
-    elif p == IdP.google:
-        return google_login_client
-
-
-def get_auth_client(p: IdP = Query(...)) -> OAuth2AuthClient:
-    if p == IdP.github:
-        return github_auth_client
-    if p == IdP.google:
-        return google_auth_client
 
 
 @auth_router.get("/login")
 async def auth_url_redirect(
-    token: StateToken = Depends(mint_state_token),
-    login_client: OAuth2LoginClient = Depends(get_login_client),
-    state_token_db: StateTokenDB = Depends(get_state_token_db),
+    p: IdP = Query(...),
+    u: Optional[str] = Query(None),
 ):
-    try:
+    auth_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid Request",
+    )
 
-        debug(token, login_client, state_token_db)
-        auth_url = login_client.create_auth_url(token)
-        state_token_db.store(token)
-    except Exception as ex:
+    # determine identity provider
+    if p == IdP.github:
+        login_client = github_login_client
+    elif p == IdP.google:
+        login_client = google_login_client
+    else:
+        raise auth_error
 
-        traceback.print_exc(ex)
-        print(ex)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid Request",
-        )
+    # include nonce if required
+    if p == IdP.google:
+        with_nonce = True
+    else:
+        with_nonce = False
+    state_token = StateToken.mint(idp=p, uistate=u, with_nonce=with_nonce)
+
+    debug(state_token, login_client, state_token_db)
+    auth_url = login_client.create_auth_url(state_token)
+    state_token_db.store(state_token)
 
     return RedirectResponse(auth_url)
 
@@ -103,7 +55,6 @@ async def auth_callback(
     code: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     scope: Optional[str] = Query(None),
-    state_token_db: StateTokenDB = Depends(get_state_token_db),
 ):
     auth_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -127,7 +78,13 @@ async def auth_callback(
     if not token:
         raise auth_error
 
-    auth_client = get_auth_client(token.idp)
+    # determine identity provider
+    if token.idp == IdP.github:
+        auth_client = github_auth_client
+    elif token.idp == IdP.google:
+        auth_client = google_auth_client
+    else:
+        raise auth_error
 
     try:
         auth_user = await auth_client.authorize(code=code, token=token)
