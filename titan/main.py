@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 
-from .exception_handlers.passwd import passwd_exception_handlers
-from .public.oauth2 import auth_router
-from .public.admin import admin_router
-from .userdb import user_db
 from .admindb import admin_db
-from .statedb import state_token_db
+from .exception_handlers.passwd import passwd_exception_handlers
+from .public.admin import admin_router
+from .public.oauth2 import auth_router
+from .statetokendb import state_token_db
+from .userdb import user_db
 
 all_exception_handlers = {}
 all_exception_handlers.update(passwd_exception_handlers)
