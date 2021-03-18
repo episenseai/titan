@@ -94,21 +94,24 @@ async def auth_callback(
         raise auth_error
 
     user = await user_db.get_user(auth_user.email)
+    debug(user)
 
     if user is None:
         await user_db.create_user(auth_user, disabled=False, email_verified=False)
         user = await user_db.get_user(auth_user.email)
-    if user is None:
-        raise auth_error
-    if user.idp != token.idp:
-        raise auth_error
-    # update user info if needed after every login
+        # unexpected: should never happen
+        if user is None:
+            raise auth_error
+    else:
+        # user has already signed up with the email using a different
+        # identity provider.
+        if user.idp != token.idp:
+            raise auth_error
+        # update user info
+        await user_db.try_update_user(user=user)
 
-    debug(user)
-
-    # send a confirmation email
-    # verify the email
-    # activate the account
+    # send a confirmation email and verify the email (our own verification)
+    # activate the account after manual approval
     token_claims = TokenClaims(sub=str(user.guid), scope=user.scope)
     access_token = token_claims.mint_access_refresh_token(user=user, token=token)
     debug(access_token)

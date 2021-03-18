@@ -59,5 +59,5 @@ class UserDB:
         )
         await self.database.execute(query=query, values=values)
 
-    async def update_user(self):
+    async def try_update_user(self, user: UserInDB):
         pass
