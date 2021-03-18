@@ -43,3 +43,9 @@ class AdminDB:
                 print(f"Error {admin=} for {email=} {username=}")
                 raise DatabaseUserFetchError from exc
         return None
+
+    @staticmethod
+    async def verify_password(admin: AdminInDB, password: str) -> bool:
+        if admin.password == password:
+            return True
+        return False

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from .exception_handlers.passwd import passwd_exception_handlers
 from .public.oauth2 import auth_router
+from .public.admin import admin_router
 from .userdb import user_db
 from .admindb import admin_db
 
@@ -24,3 +25,4 @@ async def shutdown():
 
 
 app.include_router(auth_router)
+app.include_router(admin_router)

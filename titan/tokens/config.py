@@ -56,8 +56,9 @@ class __AuthSettings(ImmutBaseModel):
     authjwt_secret_key: Optional[StrictStr] = None
     authjwt_public_key: Optional[StrictStr] = public_key
     authjwt_private_key: Optional[StrictStr] = private_key
-    authjwt_access_token_expires: timedelta = timedelta(minutes=60)
-    authjwt_refresh_token_expires: timedelta = timedelta(hours=4)
+    authjwt_access_token_expires: timedelta = timedelta(minutes=240)
+    authjwt_refresh_token_expires: timedelta = timedelta(hours=8)
+    authjwt_xaccess_token_expires: timedelta = timedelta(hours=1)
     authjwt_denylist_enabled: StrictBool = False
     authjwt_denylist_token_types: Set[StrictStr] = {"access_token", "refresh_token"}
 

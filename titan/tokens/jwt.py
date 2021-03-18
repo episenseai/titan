@@ -8,6 +8,7 @@ from pydantic import validator
 from pydantic.types import StrictInt, StrictStr
 
 from ..accounts.user import UserInDB
+from ..admin.user import AdminInDB
 from ..models import ImmutBaseModel
 from ..oauth2.state import StateToken
 from .config import get_jwt_config
@@ -20,6 +21,13 @@ class EncodedJWTToken(ImmutBaseModel):
 
 class Token(ImmutBaseModel):
     pass
+
+
+class XAccessToken(Token):
+    access_token: str
+    token_type: str
+    expires_in: int
+    guid: Optional[str] = None
 
 
 class AccessToken(Token):
@@ -70,6 +78,9 @@ class TokenClaims(ImmutBaseModel):
         elif ttype == "refresh_token":
             exp = current_time + config.authjwt_refresh_token_expires
             expires_in = None
+        elif ttype == "xaccess_token":
+            exp = current_time + config.authjwt_xaccess_token_expires
+            expires_in = int(config.authjwt_xaccess_token_expires / timedelta(seconds=1)) - 10
         else:
             raise RuntimeError("Can not issue token")
 
@@ -132,6 +143,16 @@ class TokenClaims(ImmutBaseModel):
             u=u,
         )
 
+    def mint_xaccess_token(self, admin: AdminInDB):
+        encoded_token = self._mint_token("xaccess_token")
+
+        return XAccessToken(
+            access_token=encoded_token.token,
+            token_type="Bearer",
+            expires_in=encoded_token.expires_in,
+            guid=str(admin.guid),
+        )
+
 
 async def validate_and_get_token_claims_dict(raw_token: str) -> Optional[dict]:
     config = get_jwt_config()
@@ -150,5 +171,6 @@ async def validate_and_get_token_claims_dict(raw_token: str) -> Optional[dict]:
             issuer=TOKEN_ISS,
         )
         return decoded_token
-    except (JWTError, JOSEError):
+    except (JWTError, JOSEError) as exc:
+        print(exc)
         return None
