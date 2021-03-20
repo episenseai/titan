@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 from urllib.parse import urlencode
 
 import httpx
@@ -51,7 +51,7 @@ class GoogleLoginClient(OAuth2LoginClient):
     def idp(self) -> IdP:
         return IdP.google
 
-    def get_query_params(self, token: StateToken, refresh_token: bool = False) -> Dict[str, Any]:
+    def get_query_params(self, token: StateToken, refresh_token: bool = False) -> dict[str, Any]:
         if refresh_token:
             access_type = "offline"
         else:
@@ -105,7 +105,7 @@ class GoogleAuthClient(OAuth2AuthClient):
     def idp(self) -> IdP:
         return IdP.google
 
-    def get_query_params(self, code: str, token: StateToken) -> Dict[str, Any]:
+    def get_query_params(self, code: str, token: StateToken) -> dict[str, Any]:
         url_params = {
             "code": code,
             "client_id": self.client_id,
@@ -147,7 +147,7 @@ class GoogleAuthClient(OAuth2AuthClient):
             except httpx.RequestError as exc:
                 raise Oauth2AuthorizationError(f"Error calling {exc.request.url} endpoint") from exc
 
-    async def validate_id_token(self, jwt_token: str, access_token: str) -> Dict[str, Any]:
+    async def validate_id_token(self, jwt_token: str, access_token: str) -> dict[str, Any]:
         await self.update_jwks_keys()
         keys = self.jwks_keys.get("keys", None)
         if not keys:
@@ -187,7 +187,7 @@ class GoogleAuthClient(OAuth2AuthClient):
             raise Oauth2AuthorizationError(f"Unknown Error during 'id_token' validation for google {exc=}")
 
     # https://developers.google.com/identity/protocols/oauth2/scopes#openid_connect
-    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> Tuple[bool, str]:
+    def validate_requested_scope(self, granted_scope: Union[str, list[str]]) -> tuple[bool, str]:
         missing_scope = []
         if isinstance(granted_scope, str):
             granted_scope = granted_scope.split()

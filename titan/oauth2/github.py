@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 from urllib.parse import urlencode
 
 import httpx
@@ -47,7 +47,7 @@ class GithubLoginClient(OAuth2LoginClient):
         print("git idp")
         return IdP.github
 
-    def get_query_params(self, token: StateToken, refresh_token: bool) -> Dict[str, Any]:
+    def get_query_params(self, token: StateToken, refresh_token: bool) -> dict[str, Any]:
         if refresh_token:
             raise ValueError("Github does not support refresh tokens")
         url_params = {
@@ -107,7 +107,7 @@ class GithubAuthClient(OAuth2AuthClient):
         return urlencode(self.get_query_params(code, token))
 
     # https://docs.github.com/en/developers/apps/scopes-for-oauth-apps#normalized-scopes
-    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> Tuple[bool, str]:
+    def validate_requested_scope(self, granted_scope: Union[str, list[str]]) -> tuple[bool, str]:
         missing_scope = []
         if isinstance(granted_scope, str):
             granted_scope = granted_scope.split(",")

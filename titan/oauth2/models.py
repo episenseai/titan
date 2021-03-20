@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod, abstractstaticmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import AnyHttpUrl, SecretStr
 
@@ -12,7 +12,7 @@ class OAuth2AuthentcatedCreds(ImmutBaseModel):
     access_token: str
     token_type: str
     expires_in: Optional[int] = None
-    scope: Union[str, List[str]]
+    scope: Union[str, list[str]]
     id_token: Optional[str] = None
     refresh_token: Optional[str] = None
 
@@ -35,21 +35,21 @@ class OAuth2Provider(ImmutBaseModel):
     # url where to find the public keys of the provider to verify the token
     jwks_uri: Optional[AnyHttpUrl] = None
     # public keys of the provider
-    jwks_keys: Dict[str, Any] = {}
+    jwks_keys: dict[str, Any] = {}
 
 
 class OAuth2ClientBase(OAuth2Provider):
     # get this id from the provider
     client_id: str
     # requested scope from the provider during authentication
-    scope: Union[str, List[str]]
+    scope: Union[str, list[str]]
     # callback url: auth_url redirects here with 'code' and 'state'
     redirect_uri: AnyHttpUrl
     # If it's a JWT token, then it represents 'iss' claim of the
     # received token
     iss: Optional[str] = None
 
-    def requested_scope(self) -> List[str]:
+    def requested_scope(self) -> list[str]:
         if isinstance(self.scope, list):
             return self.scope.copy()
         return self.scope.split().copy()
@@ -73,7 +73,7 @@ class OAuth2LoginClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    def get_query_params(self, token: StateToken, refresh_token: bool) -> Dict[str, Any]:
+    def get_query_params(self, token: StateToken, refresh_token: bool) -> dict[str, Any]:
         pass
 
     @abstractmethod
@@ -107,7 +107,7 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    def get_query_params(self, code: str, token: StateToken) -> Dict[str, Any]:
+    def get_query_params(self, code: str, token: StateToken) -> dict[str, Any]:
         pass
 
     @abstractmethod
@@ -115,7 +115,7 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
         pass
 
     @abstractmethod
-    def validate_requested_scope(self, granted_scope: Union[str, List[str]]) -> bool:
+    def validate_requested_scope(self, granted_scope: Union[str, list[str]]) -> bool:
         pass
 
     @abstractmethod

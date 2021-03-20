@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 from jose import jwt
 from jose.exceptions import JOSEError, JWTError
@@ -57,7 +57,7 @@ class TokenClaims(ImmutBaseModel):
     # audience
     aud: Optional[Union[StrictStr, Sequence[StrictStr]]] = None
     # scope
-    scope: Union[StrictStr, List[StrictStr]] = ""
+    scope: Union[StrictStr, list[StrictStr]] = ""
 
     @validator("scope", pre=True)
     def join_scope(cls, values):

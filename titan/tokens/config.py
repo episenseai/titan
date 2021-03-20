@@ -1,6 +1,6 @@
 from datetime import timedelta
 from functools import lru_cache
-from typing import Optional, Set
+from typing import Optional
 
 from pydantic import root_validator, validator
 from pydantic.types import StrictBool, StrictStr
@@ -60,7 +60,7 @@ class __AuthSettings(ImmutBaseModel):
     authjwt_refresh_token_expires: timedelta = timedelta(hours=8)
     authjwt_xaccess_token_expires: timedelta = timedelta(hours=1)
     authjwt_denylist_enabled: StrictBool = False
-    authjwt_denylist_token_types: Set[StrictStr] = {"access_token", "refresh_token"}
+    authjwt_denylist_token_types: set[StrictStr] = {"access_token", "refresh_token"}
 
     @validator("authjwt_algorithm", always=True)
     def validate_algorithm(cls, v):
