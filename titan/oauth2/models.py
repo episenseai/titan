@@ -61,6 +61,7 @@ class OAuth2LoginClient(OAuth2ClientBase, ABC):
         client_id: str,
         scope: str,
         redirect_uri: Union[AnyHttpUrl, str],
+        iss: Optional[str],
     ) -> "OAuth2LoginClient":
         """
         Builder method to create an instance of the class
@@ -95,6 +96,7 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
         scope: str,
         redirect_uri: Union[AnyHttpUrl, str],
         client_secret: Union[SecretStr, str],
+        iss: Optional[str],
     ) -> "OAuth2AuthClient":
         """
         Builder method to create an instance of the class
