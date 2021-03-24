@@ -4,7 +4,7 @@ from databases import Database
 
 from ..exceptions import DatabaseUserFetchError
 from ..oauth2.models import OAuth2AuthentcatedUser
-from .schema import users_schema, UserInDB
+from .schema import UserInDB, users_schema
 
 
 class UserDB:

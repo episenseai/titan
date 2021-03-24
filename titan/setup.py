@@ -1,8 +1,10 @@
-import typer
 import asyncio
+
+import typer
 from databases import Database
-from .admin.schema import create_admins_table, admins_schema
+
 from .accounts.schema import create_users_table
+from .admin.schema import admins_schema, create_admins_table
 
 cli = typer.Typer()
 
