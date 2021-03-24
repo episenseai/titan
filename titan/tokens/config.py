@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import root_validator, validator
 from pydantic.types import StrictBool, StrictStr
 
-from ..models import ImmutBaseModel
+from ..utils import ImmutBaseModel
 
 # In the real case, you can put the
 # public key and private key in *.pem, *.key then you can read that file

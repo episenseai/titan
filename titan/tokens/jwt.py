@@ -9,8 +9,8 @@ from pydantic.types import StrictInt, StrictStr
 
 from ..accounts.user import UserInDB
 from ..admin.user import AdminInDB
-from ..models import ImmutBaseModel
 from ..oauth2.state import StateToken
+from ..utils import ImmutBaseModel
 from .config import get_jwt_config
 
 

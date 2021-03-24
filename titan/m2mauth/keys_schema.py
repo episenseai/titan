@@ -8,7 +8,7 @@ from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import ForeignKey, Table
 
-from ..models import ImmutBaseModel
+from ..utils import ImmutBaseModel
 
 
 def keys_schema(table_name: str, users_table_name: str) -> Table:

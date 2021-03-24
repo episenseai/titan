@@ -2,7 +2,7 @@ from functools import lru_cache
 
 from pydantic import SecretStr
 
-from .models import ImmutBaseModel
+from .utils import ImmutBaseModel
 
 AUTH_REDIRECT_URI = "http://localhost:8000/auth"
 

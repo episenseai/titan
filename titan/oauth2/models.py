@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 
 from pydantic import AnyHttpUrl, SecretStr
 
-from ..models import ImmutBaseModel
+from ..utils import ImmutBaseModel
 from .idp import IDP
 from .state import StateToken
 

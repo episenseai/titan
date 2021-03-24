@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 from pydantic import StrictStr
 
-from ..models import ImmutBaseModel
+from ..utils import ImmutBaseModel
 from .idp import IDP
 
 
