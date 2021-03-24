@@ -27,18 +27,22 @@ def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) ->
 
     metadata = sqlalchemy.MetaData()
 
+    # Column defaults/onupdate callables are not supported by 'databases' library.
+    # That is why we are using server_default/server_onupdate.
+
     # https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Column
     return sqlalchemy.Table(
         table_name,
         metadata,
         # urlencoded string to be used as 'slug' in the url to access the api
+        # https://models.episense.com/{userid}/{apislug}
         sqlalchemy.Column(
             "apislug",
             sqlalchemy.String(length=128),
-            nullable=False,
-            unique=True,
+            primary_key=True,
         ),
         # Foreign key 'userid' from 'users' table associated with each api.
+        # User to which the api belongs
         sqlalchemy.Column(
             "userid",
             postgresql.UUID(),
@@ -46,6 +50,8 @@ def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) ->
             nullable=False,
         ),
         # Foreign key 'keyid' from 'keys' table associated with each api.
+        # Key used by the api for authentication. It may be null while creating the
+        # api but a key must be associated at a later time time to use the api.
         sqlalchemy.Column(
             "keyid",
             postgresql.UUID(),
@@ -53,45 +59,56 @@ def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) ->
             # We can update this later.
             nullable=True,
         ),
-        sqlalchemy.Column("disabled", sqlalchemy.Boolean, nullable=False),
-        sqlalchemy.Column("deleted", sqlalchemy.Boolean, nullable=False),
-        # Column defaults/onupdate callables are not supported by 'databases' library.
-        # That is why we are using server_default/server_onupdate.
+        # Is the api disabled by the admin?
+        sqlalchemy.Column(
+            "forzen",
+            sqlalchemy.Boolean,
+            nullable=False,
+            server_default=sqlalchemy.sql.expression.false(),
+        ),
+        # Is the api disabled by the user?
+        sqlalchemy.Column(
+            "disabled",
+            sqlalchemy.Boolean,
+            nullable=False,
+            server_default=sqlalchemy.sql.expression.false(),
+        ),
+        # Deleting the api sets the field to `True`
+        sqlalchemy.Column(
+            "deleted",
+            sqlalchemy.Boolean,
+            nullable=False,
+            server_default=sqlalchemy.sql.expression.false(),
+        ),
+        # Date of api creation
         sqlalchemy.Column(
             "created_at",
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
-            server_default=sqlalchemy.text("CURRENT_TIMESTAMP"),
+            server_default=sqlalchemy.sql.functions.current_timestamp(),
         ),
+        # Date of api update.
         sqlalchemy.Column(
             "updated_at",
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
-            server_default=sqlalchemy.text("CURRENT_TIMESTAMP"),
-            server_onupdate=sqlalchemy.text("CURRENT_TIMESTAMP"),
+            server_default=sqlalchemy.sql.functions.current_timestamp(),
+            server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
+        # Optional description of the api.
         sqlalchemy.Column("description", sqlalchemy.String(length=255), nullable=True),
     )
 
 
 class ApiInDB(ImmutBaseModel):
-    # Unique slug for the api.
-    # https://models.episense.com/{userid}/{apislug}
     apislug: str
-    # User to which the api belongs
     userid: UUID4
-    # Key used by the api for authentication. It may be null while creating the
-    # api but a key must be associated at a later time time to use the api.
     keyid: UUID4
-    # Disable the key.
+    frozen: bool
     disabled: bool
-    # Deleting the key sets the field to `True`
     deleted: bool
-    # Date of api creation
     created_at: datetime
-    # Date of api update.
-    created_at: datetime
-    # Optional description of the key.
+    updated_at: datetime
     description: Optional[str] = None
 
     class Config:

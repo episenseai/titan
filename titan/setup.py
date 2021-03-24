@@ -13,7 +13,7 @@ testdb = Database("postgresql://localhost/testdb")
 
 
 @cli.command("new-users-table")
-def new_users_table_testdb(table_name: str):
+def new_users_table_demo(table_name: str):
     asyncio.get_event_loop().run_until_complete(
         create_users_table(
             database=testdb,
@@ -23,7 +23,7 @@ def new_users_table_testdb(table_name: str):
 
 
 @cli.command("new-admins-table")
-def new_admins_table_testdb(table_name: str):
+def new_admins_table_demo(table_name: str):
     asyncio.get_event_loop().run_until_complete(
         create_admins_table(
             database=testdb,
@@ -32,7 +32,7 @@ def new_admins_table_testdb(table_name: str):
     )
 
 
-async def create_user(table_name: str, email: str, username: str, password: str, scope: str, disabled: bool = False):
+async def new_user_demo(table_name: str, email: str, username: str, password: str, scope: str, disabled: bool = False):
     admins_table = admins_schema(table_name=table_name)
 
     query = admins_table.insert()
@@ -50,9 +50,9 @@ async def create_user(table_name: str, email: str, username: str, password: str,
 
 
 @cli.command("new-admin")
-def new_admin(table_name: str, email: str, username: str, password: str, scope: str, disabled: bool = False):
+def new_admin_demo(table_name: str, email: str, username: str, password: str, scope: str, disabled: bool = False):
     asyncio.get_event_loop().run_until_complete(
-        create_user(
+        new_user_demo(
             table_name=table_name,
             email=email,
             username=username,
