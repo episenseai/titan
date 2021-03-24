@@ -14,6 +14,10 @@ from ..models import ImmutBaseModel
 def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) -> Table:
     """
     (apislug) is the primary key of this table
+
+    *** After creating an API endpoint and associating a key with it for authentication,
+        associate this endpoint with a built model to access the model through the
+        endpoint. ***
     """
     from ..accounts.schema import users_schema
     from .keys_schema import keys_schema
