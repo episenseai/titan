@@ -4,10 +4,10 @@ from databases import Database
 
 from ..exceptions import DatabaseUserFetchError
 from ..oauth2.models import OAuth2AuthentcatedUser
-from .schema import UserInDB, users_schema
+from .schema.users import UserInDB, users_schema
 
 
-class UserDB:
+class UsersDB:
     def __init__(self, db_url: str, table_name: str):
         self.database = Database(db_url)
         self.table = users_schema(table_name=table_name)

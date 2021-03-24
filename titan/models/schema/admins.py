@@ -7,7 +7,7 @@ from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 
-from ..utils import ImmutBaseModel
+from ...utils import ImmutBaseModel
 
 
 def admins_schema(table_name: str) -> Table:

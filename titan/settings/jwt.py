@@ -51,7 +51,7 @@ asymetric_crypto = {
 }
 
 
-class __AuthSettings(ImmutBaseModel):
+class JWTSettings(ImmutBaseModel):
     authjwt_algorithm: StrictStr = "RS512"
     authjwt_secret_key: Optional[StrictStr] = None
     authjwt_public_key: Optional[StrictStr] = public_key
@@ -109,8 +109,8 @@ class __AuthSettings(ImmutBaseModel):
 
 
 @lru_cache
-def get_jwt_config() -> __AuthSettings:
-    return __AuthSettings()
+def get_jwt_config() -> JWTSettings:
+    return JWTSettings()
 
 
 get_jwt_config()

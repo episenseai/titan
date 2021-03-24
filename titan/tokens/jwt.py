@@ -7,11 +7,11 @@ from jose.exceptions import JOSEError, JWTError
 from pydantic import validator
 from pydantic.types import StrictInt, StrictStr
 
-from ..accounts.user import UserInDB
-from ..admin.user import AdminInDB
+from ..models.admins import AdminInDB
+from ..models.users import UserInDB
 from ..oauth2.state import StateToken
+from ..settings.jwt import get_jwt_config
 from ..utils import ImmutBaseModel
-from .config import get_jwt_config
 
 
 class EncodedJWTToken(ImmutBaseModel):

@@ -8,10 +8,9 @@ from fastapi.responses import RedirectResponse
 from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
 from ..oauth2.models import IDP
 from ..oauth2.state import StateToken
-from ..oauth2_clients import github_auth_client, github_login_client, google_auth_client, google_login_client
-from ..statetokendb import state_token_db
+from ..settings.db import state_tokens_db, users_db
+from ..settings.idp import github_auth_client, github_login_client, google_auth_client, google_login_client
 from ..tokens.jwt import AccessToken, TokenClaims
-from ..userdb import user_db
 
 auth_router = APIRouter()
 
@@ -41,9 +40,9 @@ async def auth_url_redirect(
         with_nonce = False
     state_token = StateToken.mint(idp=p, uistate=u, with_nonce=with_nonce)
 
-    debug(state_token, login_client, state_token_db)
+    debug(state_token, login_client, state_tokens_db)
     auth_url = login_client.create_auth_url(state_token)
-    state_token_db.store(state_token)
+    state_tokens_db.store(state_token)
 
     return RedirectResponse(auth_url)
 
@@ -74,7 +73,7 @@ async def auth_callback(
     debug(code, state, scope, request.query_params)
 
     # verify that we have issued the token and pop it
-    token = state_token_db.pop_and_verify(state)
+    token = state_tokens_db.pop_and_verify(state)
     if not token:
         raise auth_error
 
@@ -93,12 +92,12 @@ async def auth_callback(
         print(exc)
         raise auth_error
 
-    user = await user_db.get_user(auth_user.email)
+    user = await users_db.get_user(auth_user.email)
     debug(user)
 
     if user is None:
-        await user_db.create_user(auth_user, disabled=False, email_verified=False)
-        user = await user_db.get_user(auth_user.email)
+        await users_db.create_user(auth_user, disabled=False, email_verified=False)
+        user = await users_db.get_user(auth_user.email)
         # unexpected: should never happen
         if user is None:
             raise auth_error
@@ -108,7 +107,7 @@ async def auth_callback(
         if user.idp != token.idp:
             raise auth_error
         # update user info
-        await user_db.try_update_user(user=user)
+        await users_db.try_update_user(user=user)
 
     # send a confirmation email and verify the email (our own verification)
     # activate the account after manual approval

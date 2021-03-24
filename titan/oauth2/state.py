@@ -60,7 +60,7 @@ class StateToken(ImmutBaseModel):
         return token
 
 
-class StateTokenDB:
+class StateTokensDB:
     def __init__(self):
         self.db = {}
 

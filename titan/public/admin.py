@@ -2,9 +2,8 @@ from devtools import debug
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
 
-from ..admindb import admin_db
+from ..settings.db import admins_db, users_db
 from ..tokens.jwt import TokenClaims, XAccessToken, validate_and_get_token_claims_dict
-from ..userdb import user_db
 
 admin_router = APIRouter(prefix="/x", tags=["x"])
 
@@ -29,17 +28,17 @@ async def get_access_token(
         raise auth_error
 
     # Check if the user is in 'users' database
-    user = await user_db.get_user(userid=decoded_token["sub"])
+    user = await users_db.get_user(userid=decoded_token["sub"])
     if user is None:
         raise auth_error
 
     # Check if the the user is in 'admins' database
-    admin = await admin_db.get_admin(email=user.email, username=form_data.username)
+    admin = await admins_db.get_admin(email=user.email, username=form_data.username)
     if admin is None:
         raise auth_error
 
     # Verify password
-    is_verified = await admin_db.verify_password(admin=admin, password=form_data.password)
+    is_verified = await admins_db.verify_password(admin=admin, password=form_data.password)
     if not is_verified:
         raise auth_error
 

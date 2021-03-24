@@ -3,7 +3,7 @@ from typing import Optional
 from databases import Database
 
 from ..exceptions import DatabaseUserFetchError
-from .schema import AdminInDB, admins_schema
+from .schema.admins import AdminInDB, admins_schema
 
 # from passlib.context import CryptContext
 
@@ -12,7 +12,7 @@ from .schema import AdminInDB, admins_schema
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
 
 
-class AdminDB:
+class AdminsDB:
     def __init__(self, db_url: str, table_name: str):
         self.database = Database(db_url)
         self.table = admins_schema(table_name=table_name)
