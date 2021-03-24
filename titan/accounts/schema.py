@@ -6,12 +6,13 @@ from asyncpg.exceptions import DuplicateTableError
 from databases import Database
 from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.sql.schema import Table
 
 from ..models import ImmutBaseModel
 from ..oauth2.models import IdP
 
 
-def users_schema(table_name: str):
+def users_schema(table_name: str) -> Table:
     """
     (email) is the primary key of this table
 

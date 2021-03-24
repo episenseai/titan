@@ -5,11 +5,12 @@ from asyncpg.exceptions import DuplicateTableError
 from databases import Database
 from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.sql.schema import Table
 
 from ..models import ImmutBaseModel
 
 
-def admins_schema(table_name: str):
+def admins_schema(table_name: str) -> Table:
     """
     (email + username) constitutes the primary key for the table.
     Same `email` may have have multiple accounts (username) with varying
