@@ -8,7 +8,7 @@ from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 
-from ...oauth2.models import IDP
+from ...auth.models import IDP
 from ...utils import ImmutBaseModel
 
 

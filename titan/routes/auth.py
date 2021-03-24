@@ -5,12 +5,12 @@ from fastapi import APIRouter, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
-from ..exceptions import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
-from ..oauth2.models import IDP
-from ..oauth2.state import StateToken
+from ..auth.models import IDP
+from ..auth.state import StateToken
+from ..exceptions.exc import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
+from ..jwt import AccessToken, TokenClaims
 from ..settings.backends import state_tokens_db, users_db
 from ..settings.idp import github_auth_client, github_login_client, google_auth_client, google_login_client
-from ..tokens.jwt import AccessToken, TokenClaims
 
 auth_router = APIRouter()
 

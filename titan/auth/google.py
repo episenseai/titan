@@ -8,7 +8,7 @@ from jose import jwt
 from jose.exceptions import JOSEError
 from pydantic import AnyHttpUrl, SecretStr
 
-from ..exceptions import (
+from ..exceptions.exc import (
     JSONDecodeError,
     JWTDecodeError,
     Oauth2AuthorizationError,

@@ -2,8 +2,8 @@ from devtools import debug
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
 
+from ..jwt import TokenClaims, XAccessToken, validate_and_get_token_claims_dict
 from ..settings.backends import admins_db, users_db
-from ..tokens.jwt import TokenClaims, XAccessToken, validate_and_get_token_claims_dict
 
 admin_router = APIRouter(prefix="/x", tags=["x"])
 

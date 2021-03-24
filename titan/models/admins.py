@@ -2,7 +2,7 @@ from typing import Optional
 
 from databases import Database
 
-from ..exceptions import DatabaseUserFetchError
+from ..exceptions.exc import DatabaseUserFetchError
 from .schema.admins import AdminInDB, admins_schema
 
 # from passlib.context import CryptContext

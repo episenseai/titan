@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from .exception_handlers.passwd import passwd_exception_handlers
-from .public.admin import admin_router
-from .public.oauth2 import auth_router
+from .exceptions.passwd import passwd_exception_handlers
+from .routes.admin import admin_router
+from .routes.auth import auth_router
 from .settings.backends import admins_db, state_tokens_db, users_db
 
 all_exception_handlers = {}

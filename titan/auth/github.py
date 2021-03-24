@@ -5,7 +5,7 @@ import httpx
 from devtools import debug
 from pydantic import AnyHttpUrl, SecretStr
 
-from ..exceptions import (
+from ..exceptions.exc import (
     JSONDecodeError,
     Oauth2AuthorizationError,
     OAuth2EmailPrivdedError,

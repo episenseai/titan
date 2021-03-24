@@ -2,8 +2,8 @@ from typing import Optional
 
 from databases import Database
 
-from ..exceptions import DatabaseUserFetchError
-from ..oauth2.models import OAuth2AuthentcatedUser
+from ..auth.models import OAuth2AuthentcatedUser
+from ..exceptions.exc import DatabaseUserFetchError
 from .schema.users import UserInDB, users_schema
 
 

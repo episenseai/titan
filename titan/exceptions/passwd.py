@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import ORJSONResponse
 from passlib.exc import PasswordSizeError, PasswordTruncateError, PasswordValueError
 
-from ..exceptions import Oauth2AuthorizationError
+from .exc import Oauth2AuthorizationError
 
 
 async def bcrypt_password_error(request, exc):

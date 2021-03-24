@@ -1,5 +1,5 @@
-from ..oauth2.github import GithubAuthClient, GithubLoginClient
-from ..oauth2.google import GoogleAuthClient, GoogleLoginClient
+from ..auth.github import GithubAuthClient, GithubLoginClient
+from ..auth.google import GoogleAuthClient, GoogleLoginClient
 from .oauth2 import get_oauth2_settings
 
 github_login_client = GithubLoginClient.new(
