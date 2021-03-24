@@ -18,7 +18,7 @@ class UserDB:
     async def disconnect(self):
         await self.database.disconnect()
 
-    async def get_user(self, email: str = None, guid: str = None) -> Optional[UserInDB]:
+    async def get_user(self, email: str = None, userid: str = None) -> Optional[UserInDB]:
         empty_query = True
         # select query
         query = self.table.select()
@@ -26,9 +26,9 @@ class UserDB:
         if isinstance(email, str):
             query = query.where(self.table.columns.email == email)
             empty_query = False
-        # select query by guid
-        if isinstance(guid, str):
-            query = query.where(self.table.columns.guid == guid)
+        # select query by userid
+        if isinstance(userid, str):
+            query = query.where(self.table.columns.userid == userid)
             empty_query = False
         if empty_query:
             return None
@@ -40,7 +40,7 @@ class UserDB:
             try:
                 return UserInDB(**user)
             except Exception as exc:
-                print(f"Error {user=} for {email=} {guid=}")
+                print(f"Error {user=} for {email=} {userid=}")
                 raise DatabaseUserFetchError from exc
         return None
 
@@ -48,7 +48,7 @@ class UserDB:
         basic_scope = "episense:demo"
         query = self.table.insert()
         values = user.dict(
-            include={"email", "full_name", "picture", "idp", "idp_guid", "idp_username"},
+            include={"email", "full_name", "picture", "idp", "idp_userid", "idp_username"},
         )
         values.update(
             {

@@ -293,6 +293,6 @@ class GoogleAuthClient(OAuth2AuthClient):
             full_name=full_name,
             picture=user_dict.get("picture", None),
             idp=self.idp,
-            idp_guid=user_dict["sub"],
+            idp_userid=user_dict["sub"],
             provider_creds=auth_dict,
         )

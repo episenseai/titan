@@ -27,7 +27,7 @@ class XAccessToken(Token):
     access_token: str
     token_type: str
     expires_in: int
-    guid: Optional[str] = None
+    userid: Optional[str] = None
 
 
 class AccessToken(Token):
@@ -35,7 +35,7 @@ class AccessToken(Token):
     token_type: str
     expires_in: int
     refresh_token: Optional[str] = None
-    guid: Optional[str] = None
+    userid: Optional[str] = None
     full_name: Optional[str] = None
     picture: Optional[str] = None
     # some user state that was supplied at the start of the login flow
@@ -111,7 +111,7 @@ class TokenClaims(ImmutBaseModel):
             access_token=encoded_token.token,
             token_type="Bearer",
             expires_in=encoded_token.expires_in,
-            guid=str(user.guid),
+            userid=str(user.userid),
             full_name=user.full_name,
             picture=user.picture,
             u=u,
@@ -137,7 +137,7 @@ class TokenClaims(ImmutBaseModel):
             token_type="Bearer",
             expires_in=atoken.expires_in,
             refresh_token=rtoken.token,
-            guid=str(user.guid),
+            userid=str(user.userid),
             full_name=user.full_name,
             picture=user.picture,
             u=u,
@@ -150,7 +150,7 @@ class TokenClaims(ImmutBaseModel):
             access_token=encoded_token.token,
             token_type="Bearer",
             expires_in=encoded_token.expires_in,
-            guid=str(admin.guid),
+            userid=str(admin.adminid),
         )
 
 

@@ -112,7 +112,7 @@ async def auth_callback(
 
     # send a confirmation email and verify the email (our own verification)
     # activate the account after manual approval
-    token_claims = TokenClaims(sub=str(user.guid), scope=user.scope)
+    token_claims = TokenClaims(sub=str(user.userid), scope=user.scope)
     access_token = token_claims.mint_access_refresh_token(user=user, token=token)
     debug(access_token)
 

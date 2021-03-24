@@ -22,7 +22,7 @@ class OAuth2AuthentcatedUser(ImmutBaseModel):
     full_name: Optional[str] = None
     picture: Optional[str] = None
     idp: IdP
-    idp_guid: str
+    idp_userid: str
     idp_username: Optional[str] = None
     provider_creds: Optional[OAuth2AuthentcatedCreds] = None
 

@@ -222,7 +222,7 @@ class GithubAuthClient(OAuth2AuthClient):
             full_name=user_dict.get("name", None),
             picture=user_dict.get("avatar_url", ""),
             idp=self.idp,
-            idp_guid=user_dict["id"],
+            idp_userid=user_dict["id"],
             idp_username=user_dict["login"],
             provider_creds=auth_dict,
         )
