@@ -9,7 +9,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 
 from ..models import ImmutBaseModel
-from ..oauth2.models import IdP
+from ..oauth2.models import IDP
 
 
 def users_schema(table_name: str) -> Table:
@@ -82,7 +82,7 @@ class UserInDB(ImmutBaseModel):
     # Date the account info was last updated on our platform.
     updated_at: datetime
     # Identity Provider.
-    idp: IdP
+    idp: IDP
     # Unique Id of the the user that we get from identity provider.
     idp_userid: str
     # Optional username/login of the user from identity provider.

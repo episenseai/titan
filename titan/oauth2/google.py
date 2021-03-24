@@ -16,7 +16,7 @@ from ..exceptions import (
     OAuth2MissingInfo,
     OAuth2MissingScope,
 )
-from .models import IdP, OAuth2AuthClient, OAuth2AuthentcatedUser, OAuth2LoginClient
+from .models import IDP, OAuth2AuthClient, OAuth2AuthentcatedUser, OAuth2LoginClient
 from .state import StateToken
 
 # get the values from
@@ -48,8 +48,8 @@ class GoogleLoginClient(OAuth2LoginClient):
         )
 
     @property
-    def idp(self) -> IdP:
-        return IdP.google
+    def idp(self) -> IDP:
+        return IDP.google
 
     def get_query_params(self, token: StateToken, refresh_token: bool = False) -> dict[str, Any]:
         if refresh_token:
@@ -102,8 +102,8 @@ class GoogleAuthClient(OAuth2AuthClient):
         )
 
     @property
-    def idp(self) -> IdP:
-        return IdP.google
+    def idp(self) -> IDP:
+        return IDP.google
 
     def get_query_params(self, code: str, token: StateToken) -> dict[str, Any]:
         url_params = {

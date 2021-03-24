@@ -4,7 +4,7 @@ from typing import Any, Optional, Union
 from pydantic import AnyHttpUrl, SecretStr
 
 from ..models import ImmutBaseModel
-from .idp import IdP
+from .idp import IDP
 from .state import StateToken
 
 
@@ -21,7 +21,7 @@ class OAuth2AuthentcatedUser(ImmutBaseModel):
     email: str
     full_name: Optional[str] = None
     picture: Optional[str] = None
-    idp: IdP
+    idp: IDP
     idp_userid: str
     idp_username: Optional[str] = None
     provider_creds: Optional[OAuth2AuthentcatedCreds] = None
@@ -70,7 +70,7 @@ class OAuth2LoginClient(OAuth2ClientBase, ABC):
 
     @property
     @abstractmethod
-    def idp(self) -> IdP:
+    def idp(self) -> IDP:
         pass
 
     @abstractmethod
@@ -105,7 +105,7 @@ class OAuth2AuthClient(OAuth2ClientBase, ABC):
 
     @property
     @abstractmethod
-    def idp(self) -> IdP:
+    def idp(self) -> IDP:
         pass
 
     @abstractmethod
