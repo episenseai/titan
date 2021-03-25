@@ -3,6 +3,7 @@ from typing import Optional
 from databases import Database
 
 from ..exceptions import DatabaseUserFetchError
+from .pgsql import PgSQLTable
 from .schema.keys import KeyInDB, keys_schema
 
 # from passlib.context import CryptContext
@@ -12,5 +13,9 @@ from .schema.keys import KeyInDB, keys_schema
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
 
 
-class KeysDB:
-    pass
+class KeysTable(PgSQLTable):
+    def __init__(self, database_url: str, table_name: str, users_table_name: str) -> None:
+        super().__init__(
+            Database(database_url),
+            keys_schema(table_name=table_name, users_table_name=users_table_name),
+        )

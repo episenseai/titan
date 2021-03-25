@@ -3,25 +3,13 @@ from typing import Optional
 from databases import Database
 
 from ..exceptions.exc import DatabaseUserFetchError
+from .pgsql import PgSQLTable
 from .schema.admins import AdminInDB, admins_schema
 
-# from passlib.context import CryptContext
 
-# ["auto"] will configure the CryptContext instance to deprecate all
-# supported schemes except for the default scheme.
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
-
-
-class AdminsDB:
-    def __init__(self, db_url: str, table_name: str):
-        self.database = Database(db_url)
-        self.table = admins_schema(table_name=table_name)
-
-    async def connect(self):
-        await self.database.connect()
-
-    async def disconnect(self):
-        await self.database.disconnect()
+class AdminsDB(PgSQLTable):
+    def __init__(self, database_url: str, table_name: str):
+        super().__init__(Database(database_url), admins_schema(table_name=table_name))
 
     async def get_admin(self, email: str, username: str) -> Optional[AdminInDB]:
         query = (

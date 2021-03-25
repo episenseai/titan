@@ -12,5 +12,5 @@ from .schema.apis import ApiInDB, apis_schema
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
 
 
-class ApisDB:
+class ApisTable:
     pass
