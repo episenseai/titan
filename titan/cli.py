@@ -65,6 +65,7 @@ def print_table_schema(table: str = typer.Argument(..., help="must be one of [us
 
     if pgmanage is None:
         typer.echo(message="table must be one of [users, admins, keys, apis]", err=True)
+        exit(1)
 
     print(pgmanage.str_schema())
 
