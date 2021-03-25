@@ -7,9 +7,9 @@ from .pgsql import PgSQLTable
 from .schema.admins import AdminInDB, admins_schema
 
 
-class AdminsDB(PgSQLTable):
+class AdminsTable(PgSQLTable):
     def __init__(self, database_url: str, table_name: str):
-        super().__init__(Database(database_url), admins_schema(table_name=table_name))
+        super().__init__(Database(database_url), admins_schema(admins_table=table_name))
 
     async def get_admin(self, email: str, username: str) -> Optional[AdminInDB]:
         query = (

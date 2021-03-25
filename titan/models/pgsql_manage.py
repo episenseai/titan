@@ -60,12 +60,12 @@ class UsersPgSQlManageTable(PgSQLManageTable):
     def __init__(
         self,
         database_url: str,
-        table_name: str,
+        users_table: str,
         uuid_ext: bool = True,
     ) -> None:
         super().__init__(
             database=Database(database_url),
-            table=users_schema(table_name=table_name),
+            table=users_schema(users_table=users_table),
             uuid_ext=uuid_ext,
         )
 
@@ -74,12 +74,12 @@ class AdminsPgSQlManageTable(PgSQLManageTable):
     def __init__(
         self,
         database_url: str,
-        table_name: str,
+        admins_table: str,
         uuid_ext: bool = True,
     ) -> None:
         super().__init__(
             database=Database(database_url),
-            table=admins_schema(table_name=table_name),
+            table=admins_schema(admins_table=admins_table),
             uuid_ext=uuid_ext,
         )
 
@@ -88,15 +88,15 @@ class KeysPgSQlManageTable(PgSQLManageTable):
     def __init__(
         self,
         database_url: str,
-        table_name: str,
-        users_table_name: str,
+        keys_table: str,
+        users_table: str,
         uuid_ext: bool = True,
     ) -> None:
         super().__init__(
             database=Database(database_url),
             table=keys_schema(
-                table_name=table_name,
-                users_table_name=users_table_name,
+                keys_table=keys_table,
+                users_table=users_table,
             ),
             uuid_ext=uuid_ext,
         )
@@ -106,17 +106,17 @@ class ApisPgSQlManageTable(PgSQLManageTable):
     def __init__(
         self,
         database_url: str,
-        table_name: str,
-        users_table_name: str,
-        keys_table_name: str,
+        apis_table: str,
+        users_table: str,
+        keys_table: str,
         uuid_ext: bool = True,
     ) -> None:
         super().__init__(
             database=Database(database_url),
             table=apis_schema(
-                table_name=table_name,
-                users_table_name=users_table_name,
-                keys_table_name=keys_table_name,
+                apis_table=apis_table,
+                users_table_name=users_table,
+                keys_table_name=keys_table,
             ),
             uuid_ext=uuid_ext,
         )

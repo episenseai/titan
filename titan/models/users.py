@@ -10,7 +10,7 @@ from .schema.users import UserInDB, users_schema
 
 class UsersTable(PgSQLTable):
     def __init__(self, database_url: str, table_name: str):
-        super().__init__(Database(database_url), users_schema(table_name=table_name))
+        super().__init__(Database(database_url), users_schema(users_table=table_name))
 
     async def get_user(self, email: str = None, userid: str = None) -> Optional[UserInDB]:
         empty_query = True

@@ -9,7 +9,7 @@ from sqlalchemy.sql.schema import ForeignKey, Table
 from ...utils import ImmutBaseModel
 
 
-def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) -> Table:
+def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) -> Table:
     """
     (apislug) is the primary key of this table
 
@@ -20,8 +20,8 @@ def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) ->
     from .keys import keys_schema
     from .users import users_schema
 
-    users_table = users_schema(table_name=users_table_name)
-    keys_table = keys_schema(table_name=keys_table_name, users_table_name=users_table_name)
+    users_table = users_schema(users_table=users_table_name)
+    keys_table = keys_schema(keys_table=keys_table_name, users_table=users_table_name)
 
     metadata = sqlalchemy.MetaData()
 
@@ -30,7 +30,7 @@ def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) ->
 
     # https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Column
     return sqlalchemy.Table(
-        table_name,
+        apis_table,
         metadata,
         # urlencoded string to be used as 'slug' in the url to access the api
         # https://models.episense.com/{userid}/{apislug}

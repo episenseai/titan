@@ -17,5 +17,5 @@ class KeysTable(PgSQLTable):
     def __init__(self, database_url: str, table_name: str, users_table_name: str) -> None:
         super().__init__(
             Database(database_url),
-            keys_schema(table_name=table_name, users_table_name=users_table_name),
+            keys_schema(keys_table=table_name, users_table=users_table_name),
         )
