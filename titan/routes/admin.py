@@ -37,6 +37,10 @@ async def get_access_token(
     if admin is None:
         raise auth_error
 
+    # admin is fisabled by superadmin
+    if admin.frozen:
+        raise auth_error
+
     # Verify password
     is_verified = await admins_db.verify_password(admin=admin, password=form_data.password)
     if not is_verified:

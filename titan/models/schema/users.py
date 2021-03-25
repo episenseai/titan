@@ -46,13 +46,6 @@ def users_schema(users_table: str) -> Table:
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Is the account disabled by the user?
-        sqlalchemy.Column(
-            "disabled",
-            sqlalchemy.Boolean,
-            nullable=False,
-            server_default=sqlalchemy.sql.expression.false(),
-        ),
         # Did we verify the email ourselves (not the provider verification)? We are
         # creating accounts only when the email is verified by the provider.
         sqlalchemy.Column(
@@ -94,8 +87,6 @@ class UserInDB(ImmutBaseModel):
     email: str
     full_name: Optional[str] = None
     forzen: bool
-    disabled: bool
-    deleted: bool
     email_verified: bool
     scope: str = ""
     picture: Optional[str] = None

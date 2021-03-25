@@ -55,19 +55,3 @@ class UsersTable(PgSQLTable):
 
     async def try_update_user(self, user: UserInDB):
         pass
-
-    async def disable_userid(self, userid: str):
-        # TODO
-        pass
-
-    async def enable_userid(self, userid: str):
-        # TODO
-        pass
-
-    async def disable_email(self, email: str):
-        # TODO
-        pass
-
-    async def enable_email(self, email: str):
-        # TODO
-        pass

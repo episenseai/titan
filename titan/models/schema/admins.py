@@ -53,13 +53,6 @@ def admins_schema(admins_table: str) -> Table:
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Is the admin account disabled?
-        sqlalchemy.Column(
-            "disabled",
-            sqlalchemy.Boolean,
-            nullable=False,
-            server_default=sqlalchemy.sql.expression.false(),
-        ),
         # Granted oauth2 `scope` to the admin to do different admin stuffs.
         sqlalchemy.Column("scope", sqlalchemy.String(length=2048), nullable=False),
         # Date of account creation.
@@ -85,7 +78,7 @@ class AdminInDB(ImmutBaseModel):
     email: str
     username: str
     password: str
-    disabled: bool
+    frozen: bool
     scope: str = ""
     created_at: datetime
     updated_at: datetime

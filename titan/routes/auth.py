@@ -106,6 +106,9 @@ async def auth_callback(
         # identity provider.
         if user.idp != token.idp:
             raise auth_error
+        # user is dsiabled by admin
+        if user.forzen:
+            raise auth_error
         # update user info
         await users_db.try_update_user(user=user)
 
