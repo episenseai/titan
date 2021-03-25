@@ -64,10 +64,10 @@ class UsersTable(PgSQLTable):
         # TODO
         pass
 
-    async def disable_email(self, userid: str):
+    async def disable_email(self, email: str):
         # TODO
         pass
 
-    async def enable_email(self, userid: str):
+    async def enable_email(self, email: str):
         # TODO
         pass

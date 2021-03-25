@@ -77,11 +77,11 @@ class UsersPgSQlManageTable(PgSQLManageTable):
         # TODO
         pass
 
-    async def freeze_email(self, userid: str):
+    async def freeze_email(self, email: str):
         # TODO
         pass
 
-    async def unfreeze_email(self, userid: str):
+    async def unfreeze_email(self, email: str):
         # TODO
         pass
 
