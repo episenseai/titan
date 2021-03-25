@@ -2,8 +2,6 @@ from datetime import datetime
 from typing import Optional
 
 import sqlalchemy
-from asyncpg.exceptions import DuplicateTableError
-from databases import Database
 from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import ForeignKey, Table
@@ -23,7 +21,7 @@ def apis_schema(table_name: str, users_table_name: str, keys_table_name: str) ->
     from .users import users_schema
 
     users_table = users_schema(table_name=users_table_name)
-    keys_table = keys_schema(table_name=keys_table_name)
+    keys_table = keys_schema(table_name=keys_table_name, users_table_name=users_table_name)
 
     metadata = sqlalchemy.MetaData()
 
@@ -113,23 +111,3 @@ class ApiInDB(ImmutBaseModel):
 
     class Config:
         orm_mode = True
-
-
-async def create_apis_table(database: Database, table_name: str, users_table_name: str, keys_table_name: str):
-    """
-    compiled CREATE TABLE statement
-    >>> print(str(sqlalchemy.schema.CreateTable(apis_table).compile(dialect=postgresql.dialect())))
-    """
-    async with database as db:
-        try:
-            # enable UUID extension for the postgresql
-            uuid_enable_query = '''CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'''
-            await db.execute(query=uuid_enable_query)
-            apis_table = apis_schema(
-                table_name=table_name, users_table_name=users_table_name, keys_table_name=keys_table_name
-            )
-            # CREATE TABLE
-            create_table_query = sqlalchemy.schema.CreateTable(apis_table)
-            await db.execute(query=create_table_query)
-        except DuplicateTableError as exc:
-            print(f"{exc} -- TABLE already exists in the {database.url}")

@@ -2,8 +2,6 @@ from datetime import datetime
 from typing import Optional
 
 import sqlalchemy
-from asyncpg.exceptions import DuplicateTableError
-from databases import Database
 from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
@@ -116,21 +114,3 @@ class UserInDB(ImmutBaseModel):
 
     class Config:
         orm_mode = True
-
-
-async def create_users_table(database: Database, table_name: str):
-    """
-    compiled CREATE TABLE statement
-    >>> print(str(sqlalchemy.schema.CreateTable(users_table).compile(dialect=postgresql.dialect())))
-    """
-    async with database as db:
-        try:
-            # enable UUID extension for the postgresql
-            uuid_enable_query = '''CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'''
-            await db.execute(query=uuid_enable_query)
-            users_table = users_schema(table_name)
-            # CREATE TABLE
-            create_table_query = sqlalchemy.schema.CreateTable(users_table)
-            await db.execute(query=create_table_query)
-        except DuplicateTableError as exc:
-            print(f"{exc} -- TABLE already exists in the {database.url}")
