@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, Optional
 
 import sqlalchemy
 from asyncpg.exceptions import DuplicateTableError
@@ -39,7 +39,7 @@ class PgSQLManageTable:
         """
         await self.database.disconnect()
 
-    async def insert(self, values: dict = None):
+    async def insert(self, values: Optional[dict] = None):
         async with self.database as db:
             await db.execute(query=self.table.insert(), values=values)
 
