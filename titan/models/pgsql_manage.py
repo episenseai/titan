@@ -4,7 +4,6 @@ import sqlalchemy
 from asyncpg.exceptions import DuplicateTableError
 from databases import Database
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy.sql.schema import Table
 
 from .schema.admins import admins_schema
