@@ -37,3 +37,33 @@ class AdminsTable(PgSQLTable):
         if admin.password == password:
             return True
         return False
+
+    async def disable_adminid(self, adminid: str):
+        # TODO
+        pass
+
+    async def enable_adminid(self, adminid: str):
+        # TODO
+        pass
+
+    async def disable_username(self, username: str):
+        # TODO
+        pass
+
+    async def enable_username(self, username: str):
+        # TODO
+        pass
+
+    async def disable_email(self, email: str):
+        """
+        Disable all 'username' associated with this email.
+        """
+        # TODO
+        pass
+
+    async def enable_email(self, email: str):
+        """
+        Disable all 'username' associated with this email.
+        """
+        # TODO
+        pass

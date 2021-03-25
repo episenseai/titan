@@ -64,14 +64,14 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Is the api disabled by the user?
+        # Is the api disabled by the user? Reversible
         sqlalchemy.Column(
             "disabled",
             sqlalchemy.Boolean,
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Deleting the api sets the field to `True`
+        # After marking it for deletion it can not be undone.
         sqlalchemy.Column(
             "deleted",
             sqlalchemy.Boolean,

@@ -14,3 +14,15 @@ from .schema.apis import ApiInDB, apis_schema
 
 class ApisTable:
     pass
+
+    async def disable(self, apislug: str):
+        # TODO
+        pass
+
+    async def enable(self, apislug: str):
+        # TODO
+        pass
+
+    async def delete(self, apislug: str):
+        # TODO
+        pass

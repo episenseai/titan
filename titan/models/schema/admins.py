@@ -39,10 +39,20 @@ def admins_schema(admins_table: str) -> Table:
         # Do not add foriegn key constraint. Admins must be added manually to
         # database; no api should be provided.
         sqlalchemy.Column("email", sqlalchemy.String(length=254), primary_key=True),
-        # admin username
-        sqlalchemy.Column("username", sqlalchemy.String(length=254), primary_key=True),
+        # Each email can be associated with multiple 'username' which may have different
+        # scopes associated with them. But the 'username' must be unqiue throughout the
+        # table. Two different emails can not have the same same 'username'.
+        sqlalchemy.Column("username", sqlalchemy.String(length=254), primary_key=True, unique=True),
         # admin password
         sqlalchemy.Column("password", sqlalchemy.String(length=1024), nullable=False),
+        # Is the admin account frozen? Admins with appropriate privilage/scope can
+        # freeze accounts.
+        sqlalchemy.Column(
+            "forzen",
+            sqlalchemy.Boolean,
+            nullable=False,
+            server_default=sqlalchemy.sql.expression.false(),
+        ),
         # Is the admin account disabled?
         sqlalchemy.Column(
             "disabled",

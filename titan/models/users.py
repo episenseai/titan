@@ -12,7 +12,7 @@ class UsersTable(PgSQLTable):
     def __init__(self, database_url: str, table_name: str):
         super().__init__(Database(database_url), users_schema(users_table=table_name))
 
-    async def get_user(self, email: str = None, userid: str = None) -> Optional[UserInDB]:
+    async def get_user(self, email: Optional[str] = None, userid: Optional[str] = None) -> Optional[UserInDB]:
         empty_query = True
         # select query
         query = self.table.select()
@@ -54,4 +54,20 @@ class UsersTable(PgSQLTable):
         await self.database.execute(query=query, values=values)
 
     async def try_update_user(self, user: UserInDB):
+        pass
+
+    async def disable_userid(self, userid: str):
+        # TODO
+        pass
+
+    async def enable_userid(self, userid: str):
+        # TODO
+        pass
+
+    async def disable_email(self, userid: str):
+        # TODO
+        pass
+
+    async def enable_email(self, userid: str):
+        # TODO
         pass

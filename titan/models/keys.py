@@ -19,3 +19,21 @@ class KeysTable(PgSQLTable):
             Database(database_url),
             keys_schema(keys_table=table_name, users_table=users_table_name),
         )
+
+    def generate_client_secret(self) -> str:
+        pass
+
+    async def get(self, keyid: str) -> KeyInDB:
+        pass
+
+    async def create(self, userid: str, description: str):
+        pass
+
+    async def disable(self, keyid: str):
+        pass
+
+    async def enable(self, keyid: str):
+        pass
+
+    async def delete(self, keyid: str):
+        pass

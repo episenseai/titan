@@ -69,6 +69,22 @@ class UsersPgSQlManageTable(PgSQLManageTable):
             uuid_ext=uuid_ext,
         )
 
+    async def freeze_userid(self, userid: str):
+        # TODO
+        pass
+
+    async def unfreeze_userid(self, userid: str):
+        # TODO
+        pass
+
+    async def freeze_email(self, userid: str):
+        # TODO
+        pass
+
+    async def unfreeze_email(self, userid: str):
+        # TODO
+        pass
+
 
 class AdminsPgSQlManageTable(PgSQLManageTable):
     def __init__(
@@ -82,6 +98,36 @@ class AdminsPgSQlManageTable(PgSQLManageTable):
             table=admins_schema(admins_table=admins_table),
             uuid_ext=uuid_ext,
         )
+
+    async def freeze_adminid(self, adminid: str):
+        # TODO
+        pass
+
+    async def unfreeze_adminid(self, adminid: str):
+        # TODO
+        pass
+
+    async def freeze_username(self, username: str):
+        # TODO
+        pass
+
+    async def unfreeze_username(self, username: str):
+        # TODO
+        pass
+
+    async def freeze_email(self, email: str):
+        """
+        Freeze all 'username' associated with this email.
+        """
+        # TODO
+        pass
+
+    def unfreeze_email(self, email: str):
+        """
+        Freeze all 'username' associated with this email.
+        """
+        # TODO
+        pass
 
 
 class KeysPgSQlManageTable(PgSQLManageTable):
@@ -100,6 +146,14 @@ class KeysPgSQlManageTable(PgSQLManageTable):
             ),
             uuid_ext=uuid_ext,
         )
+
+    async def freeze(self, keyid: str):
+        # TODO
+        pass
+
+    async def unfreeze(self, keyid: str):
+        # TODO
+        pass
 
 
 class ApisPgSQlManageTable(PgSQLManageTable):
@@ -120,3 +174,11 @@ class ApisPgSQlManageTable(PgSQLManageTable):
             ),
             uuid_ext=uuid_ext,
         )
+
+    async def freeze(self, apislug: str):
+        # TODO
+        pass
+
+    async def unfreeze(self, apislug: str):
+        # TODO
+        pass

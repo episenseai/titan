@@ -53,13 +53,6 @@ def users_schema(users_table: str) -> Table:
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Deleting the account sets the field to `True`
-        sqlalchemy.Column(
-            "deleted",
-            sqlalchemy.Boolean,
-            nullable=False,
-            server_default=sqlalchemy.sql.expression.false(),
-        ),
         # Did we verify the email ourselves (not the provider verification)? We are
         # creating accounts only when the email is verified by the provider.
         sqlalchemy.Column(

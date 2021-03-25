@@ -52,14 +52,14 @@ def keys_schema(keys_table: str, users_table: str) -> Table:
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Is the key disabled by the user?
+        # Is the key disabled by the user?. Reversible
         sqlalchemy.Column(
             "disabled",
             sqlalchemy.Boolean,
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
         ),
-        # Deleting the key sets the field to `True`
+        # After marking it for deletion it can not be undone.
         sqlalchemy.Column(
             "deleted",
             sqlalchemy.Boolean,
