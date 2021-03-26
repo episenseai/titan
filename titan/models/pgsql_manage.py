@@ -40,18 +40,15 @@ class PgSQLManageTable:
         await self.database.disconnect()
 
     async def insert(self, values: Optional[dict] = None):
-        async with self.database as db:
-            await db.execute(query=self.table.insert(), values=values)
+        await self.database.execute(query=self.table.insert(), values=values)
 
     async def create_table(self):
         try:
-            # connects with the database
-            async with self.database as db:
-                if self.uuid_ext:
-                    # enable UUID extension
-                    await db.execute(query=self.uuid_enable_query)
-                # CREATE TABLE
-                await db.execute(query=sqlalchemy.schema.CreateTable(self.table))
+            if self.uuid_ext:
+                # enable UUID extension
+                await self.database.execute(query=self.uuid_enable_query)
+            # CREATE TABLE
+            await self.database.execute(query=sqlalchemy.schema.CreateTable(self.table))
         except DuplicateTableError as exc:
             print(f"{exc} -- TABLE already exists in the {self.database.url}")
 

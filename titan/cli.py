@@ -1,13 +1,16 @@
-import asyncio
+from contextlib import asynccontextmanager
+from typing import Union
 
 import typer
 from devtools import debug
 
 from .models.keys import KeysTable
+from .models.pgsql import PgSQLTable
 from .models.pgsql_manage import (
     AdminsPgSQlManageTable,
     ApisPgSQlManageTable,
     KeysPgSQlManageTable,
+    PgSQLManageTable,
     UsersPgSQlManageTable,
 )
 from .settings.oauth2 import (
@@ -20,39 +23,54 @@ from .settings.oauth2 import (
     USERS_DATABASE_URL,
     USERS_TABLE,
 )
+from .utils import coro
 
 cli = typer.Typer()
 
 
-run_until_complete = lambda x: asyncio.get_event_loop().run_until_complete(x)
+@asynccontextmanager
+async def connect(pg: Union[PgSQLTable, PgSQLManageTable]):
+    await pg.connect()
+    try:
+        yield
+    finally:
+        await pg.disconnect()
 
 
 @cli.command("new-users-table")
-def new_users_table(users_table: str = USERS_TABLE):
+@coro
+async def new_users_table(users_table: str = USERS_TABLE):
     pgmanage = UsersPgSQlManageTable(USERS_DATABASE_URL, users_table)
-    asyncio.get_event_loop().run_until_complete(pgmanage.create_table())
+    async with connect(pgmanage):
+        await pgmanage.create_table()
 
 
 @cli.command("new-admins-table")
-def new_admins_table(admins_table: str = ADMINS_TABLE):
+@coro
+async def new_admins_table(admins_table: str = ADMINS_TABLE):
     pgmanage = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, admins_table)
-    run_until_complete(pgmanage.create_table())
+    async with connect(pgmanage):
+        await pgmanage.create_table()
 
 
 @cli.command("new-keys-table")
-def new_keys_table(keys_table: str = KEYS_TABLE, users_table: str = USERS_TABLE):
+@coro
+async def new_keys_table(keys_table: str = KEYS_TABLE, users_table: str = USERS_TABLE):
     pgmanage = KeysPgSQlManageTable(KEYS_DATABASE_URL, keys_table, users_table)
-    asyncio.get_event_loop().run_until_complete(pgmanage.create_table())
+    async with connect(pgmanage):
+        await pgmanage.create_table()
 
 
 @cli.command("new-apis-table")
-def new_apis_table(
+@coro
+async def new_apis_table(
     apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
     keys_table: str = KEYS_TABLE,
 ):
     pgmanage = ApisPgSQlManageTable(APIS_DATABASE_URL, apis_table, users_table, keys_table)
-    run_until_complete(pgmanage.create_table())
+    async with connect(pgmanage):
+        await pgmanage.create_table()
 
 
 @cli.command("schema")
@@ -77,7 +95,10 @@ def print_table_schema(table: str = typer.Argument(..., help="must be one of [us
 
 
 @cli.command("new-admin")
-def new_admin(email: str, username: str, password: str, scope: str, disabled: bool = False, table: str = ADMINS_TABLE):
+@coro
+async def create_admin(
+    email: str, username: str, password: str, scope: str, disabled: bool = False, table: str = ADMINS_TABLE
+):
     pgmanage = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, table)
     values = {
         "email": email,
@@ -86,22 +107,13 @@ def new_admin(email: str, username: str, password: str, scope: str, disabled: bo
         "scope": scope,
         "disabled": disabled,
     }
-    run_until_complete(pgmanage.insert(values=values))
-
-
-def coro(f):
-    from functools import wraps
-
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        return asyncio.get_event_loop().run_until_complete(f(*args, **kwargs))
-
-    return wrapper
+    async with connect(pgmanage):
+        await pgmanage.insert(values=values)
 
 
 @cli.command("new-key")
 @coro
-async def new_key(
+async def create_key(
     userid: str,
     description: str = "adding test key",
     database_url: str = KEYS_DATABASE_URL,
@@ -109,10 +121,9 @@ async def new_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    await pg.connect()
-    val = await pg.create(userid, description)
-    await pg.disconnect()
-    debug(val)
+    async with connect(pg):
+        val = await pg.create(userid, description)
+        debug(val)
 
 
 @cli.command("disable-key")
@@ -125,9 +136,8 @@ async def disable_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    await pg.connect()
-    await pg.disable(userid=userid, keyid=keyid)
-    await pg.disconnect()
+    async with connect(pg):
+        await pg.disable(userid=userid, keyid=keyid)
 
 
 @cli.command("delete-key")
@@ -140,9 +150,8 @@ async def delete_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    await pg.connect()
-    await pg.delete(userid=userid, keyid=keyid)
-    await pg.disconnect()
+    async with connect(pg):
+        await pg.delete(userid=userid, keyid=keyid)
 
 
 if __name__ == "__main__":

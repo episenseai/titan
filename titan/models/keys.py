@@ -27,10 +27,10 @@ class KeysTable(PgSQLTable):
 
     def generate_client_secret(self, nbytes: int = 48) -> str:
         """
-        48 bytes = 384 bits of randomness should suffice for now.
-        `client_secret` is base64 encoded so each byte results in approximately 1.3
-        characters. Resulting secret is thus 64 characters long which is less than
-        72, maximum password len supported by 'bcrypt` before truncation.
+        48 bytes = 384 bits of randomness should suffice for now. 'client_secret'
+        is base64 encoded so each byte results in approximately 1.3 characters.
+        Resulting secret is thus 64 characters long which is less than 72, maximum
+        password len supported by 'bcrypt` before truncation.
         """
         # send back with reponse to the create key api call. Ask the client
         # to save the client_secret and do not store this on the server.
