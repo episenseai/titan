@@ -2,7 +2,6 @@ from typing import Optional
 
 from databases import Database
 
-from ...exceptions import DatabaseUserFetchError
 from ..base import PgSQLBase
 from ..schema.apis import ApiInDB, apis_schema
 
