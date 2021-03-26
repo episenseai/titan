@@ -3,12 +3,13 @@ from typing import ClassVar, Optional
 import sqlalchemy
 from asyncpg.exceptions import DuplicateTableError
 from databases import Database
+from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 
 from .schema.admins import admins_schema
 from .schema.apis import apis_schema
-from .schema.keys import keys_schema
+from .schema.keys import AllKeysInDB, keys_schema
 from .schema.users import users_schema
 
 
@@ -144,13 +145,39 @@ class KeysPgSQlManageTable(PgSQLManageTable):
             uuid_ext=uuid_ext,
         )
 
-    async def freeze(self, keyid: str):
-        # TODO
-        pass
+    async def get_all(self, userid: UUID4) -> AllKeysInDB:
+        """
+        Get all keys 'frozen' or not since this is the admin interface.
+        """
+        query = self.table.select().where(self.table.c.userid == userid)
+        records = await self.database.fetch_all(query=query)
+        if not records:
+            return AllKeysInDB(keys=[])
+        return AllKeysInDB(keys=({**record} for record in records))
 
-    async def unfreeze(self, keyid: str):
-        # TODO
-        pass
+    async def toogle_frozen(self, userid: UUID4, keyid: UUID4, frozen: bool) -> Optional[bool]:
+        query = (
+            self.table.update()
+            .where(self.table.c.userid == userid)
+            .where(self.table.c.keyid == keyid)
+            .values({"frozen": frozen})
+            .returning(self.table.c.frozen)
+        )
+        result = await self.database.fetch_one(query=query)
+        if result is None:
+            # no matching row found
+            return None
+        if result.get("frozen") == (not frozen):
+            # expected that the state the toogled
+            return True
+        # it was already toogled
+        return False
+
+    async def freeze(self, userid: UUID4, keyid: UUID4):
+        return await self.toogle_frozen(userid, keyid, frozen=True)
+
+    async def unfreeze(self, userid: UUID4, keyid: UUID4):
+        return await self.toogle_frozen(userid, keyid, frozen=False)
 
 
 class ApisPgSQlManageTable(PgSQLManageTable):

@@ -154,5 +154,52 @@ async def delete_key(
         await pg.delete(userid=userid, keyid=keyid)
 
 
+@cli.command("list-keys")
+@coro
+async def list_keys(
+    userid: str,
+    database_url: str = KEYS_DATABASE_URL,
+    keys_table: str = KEYS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = KeysTable(database_url, keys_table, users_table)
+    async with connect(pg):
+        keys = await pg.get_all(userid=userid)
+        debug(keys)
+
+
+@cli.command("list-keys-manage")
+@coro
+async def list_keys_manage(
+    userid: str,
+    database_url: str = KEYS_DATABASE_URL,
+    keys_table: str = KEYS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = KeysPgSQlManageTable(database_url, keys_table, users_table)
+    async with connect(pg):
+        keys = await pg.get_all(userid=userid)
+        debug(keys)
+
+
+@cli.command("freeze-key")
+@coro
+async def freeze_key(
+    userid: str,
+    keyid: str,
+    freeze: bool = True,
+    database_url: str = KEYS_DATABASE_URL,
+    keys_table: str = KEYS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = KeysPgSQlManageTable(database_url, keys_table, users_table)
+    async with connect(pg):
+        if freeze:
+            val = await pg.freeze(userid=userid, keyid=keyid)
+        else:
+            val = await pg.unfreeze(userid=userid, keyid=keyid)
+        debug(val)
+
+
 if __name__ == "__main__":
     cli()

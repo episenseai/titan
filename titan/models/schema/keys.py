@@ -106,3 +106,7 @@ class KeyInDB(ImmutBaseModel):
 
     class Config:
         orm_mode = True
+
+
+class AllKeysInDB(ImmutBaseModel):
+    keys: list[KeyInDB]

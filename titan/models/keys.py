@@ -2,12 +2,11 @@ import secrets
 from typing import ClassVar, Optional
 
 from databases import Database
-from devtools import debug
 from passlib.context import CryptContext
 from pydantic import UUID4
 
 from .pgsql import PgSQLTable
-from .schema.keys import KeyInDB, NewKey, keys_schema
+from .schema.keys import AllKeysInDB, KeyInDB, NewKey, keys_schema
 
 
 class KeysTable(PgSQLTable):
@@ -44,7 +43,6 @@ class KeysTable(PgSQLTable):
         """
         If the key is frozen by the admin, behave as if the key was not found.
         """
-        # select query for the key
         query = self.table.select().where(self.table.c.userid == userid).where(self.table.c.keyid == keyid)
         record = await self.database.fetch_one(query=query)
         if record is None:
@@ -54,6 +52,16 @@ class KeysTable(PgSQLTable):
             # key has been deleted
             return None
         return key
+
+    async def get_all(self, userid: UUID4) -> AllKeysInDB:
+        """
+        If the key is frozen by the admin, behave as if the key was not found.
+        """
+        query = self.table.select().where(self.table.c.userid == userid)
+        records = await self.database.fetch_all(query=query)
+        if not records:
+            return AllKeysInDB(keys=[])
+        return AllKeysInDB(keys=({**record} for record in records if record.get("frozen") is False))
 
     async def create(self, userid: UUID4, description: str) -> Optional[tuple[NewKey, str]]:
         """
@@ -79,7 +87,7 @@ class KeysTable(PgSQLTable):
         newkey = await self.database.fetch_one(query=query)
         return (NewKey(**newkey), client_secret)
 
-    async def toogle_key(self, userid: UUID4, keyid: UUID4, disable: bool) -> Optional[bool]:
+    async def toogle_disabled(self, userid: UUID4, keyid: UUID4, disabled: bool) -> Optional[bool]:
         async with self.database.transaction():
             key = await self.get(userid, keyid)
             if key is None:
@@ -88,10 +96,10 @@ class KeysTable(PgSQLTable):
             if key.frozen:
                 # Key was frozen by admin
                 return None
-            if disable and key.disabled:
+            if disabled and key.disabled:
                 # Key is already disabled
                 return False
-            if not disable and not key.disabled:
+            if not disabled and not key.disabled:
                 # Key is already enabled
                 return False
 
@@ -99,7 +107,7 @@ class KeysTable(PgSQLTable):
                 self.table.update()
                 .where(self.table.c.userid == userid)
                 .where(self.table.c.keyid == keyid)
-                .values({"disabled": disable})
+                .values({"disabled": disabled})
                 .returning(self.table.c.disabled)
             )
             result = await self.database.fetch_one(query=query)
@@ -108,8 +116,8 @@ class KeysTable(PgSQLTable):
                 # and we are doing a transaction.
                 return None
 
-            enable = result.get("disabled", disable)
-            if enable == (not disable):
+            enabled = result.get("disabled", disabled)
+            if enabled == (not disabled):
                 # toogle successfull
                 return True
             else:
@@ -117,10 +125,10 @@ class KeysTable(PgSQLTable):
                 return False
 
     async def disable(self, userid: UUID4, keyid: UUID4) -> Optional[bool]:
-        return await self.toogle_key(userid, keyid, disable=True)
+        return await self.toogle_disabled(userid, keyid, disabled=True)
 
     async def enable(self, userid: UUID4, keyid: UUID4) -> Optional[bool]:
-        return await self.toogle_key(userid, keyid, disable=False)
+        return await self.toogle_disabled(userid, keyid, disabled=False)
 
     async def delete(self, userid: UUID4, keyid: UUID4) -> Optional[bool]:
         async with self.database.transaction():
