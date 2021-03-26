@@ -49,7 +49,7 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
         ),
         # Foreign key 'keyid' from 'keys' table associated with each api.
         # Key used by the api for authentication. It may be null while creating the
-        # api but a key must be associated at a later time time to use the api.
+        # api but a key must be associated at a later time to use the api.
         sqlalchemy.Column(
             "keyid",
             postgresql.UUID(),
@@ -59,7 +59,7 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
         ),
         # Is the api disabled by the admin?
         sqlalchemy.Column(
-            "forzen",
+            "frozen",
             sqlalchemy.Boolean,
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
@@ -91,6 +91,7 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
             server_default=sqlalchemy.sql.functions.current_timestamp(),
+            # NOTE: this does not work in postgres, have to use trigger
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
         # Optional description of the api.

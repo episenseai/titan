@@ -48,7 +48,7 @@ def admins_schema(admins_table: str) -> Table:
         # Is the admin account frozen? Admins with appropriate privilage/scope can
         # freeze accounts.
         sqlalchemy.Column(
-            "forzen",
+            "frozen",
             sqlalchemy.Boolean,
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
@@ -68,6 +68,7 @@ def admins_schema(admins_table: str) -> Table:
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
             server_default=sqlalchemy.sql.functions.current_timestamp(),
+            # NOTE: this does not work in postgres, have to use trigger
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
     )

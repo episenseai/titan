@@ -38,19 +38,13 @@ class UsersTable(PgSQLTable):
                 raise DatabaseUserFetchError from exc
         return None
 
-    async def create_user(self, user: OAuth2AuthentcatedUser, disabled: bool = False, email_verified: bool = False):
+    async def create_user(self, user: OAuth2AuthentcatedUser, email_verified: bool = False):
         basic_scope = "episense:demo"
         query = self.table.insert()
         values = user.dict(
             include={"email", "full_name", "picture", "idp", "idp_userid", "idp_username"},
         )
-        values.update(
-            {
-                "disabled": disabled,
-                "email_verified": email_verified,
-                "scope": basic_scope,
-            }
-        )
+        values.update({"email_verified": email_verified, "scope": basic_scope})
         await self.database.execute(query=query, values=values)
 
     async def try_update_user(self, user: UserInDB):

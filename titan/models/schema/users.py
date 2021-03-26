@@ -41,7 +41,7 @@ def users_schema(users_table: str) -> Table:
         sqlalchemy.Column("full_name", sqlalchemy.String(length=254), nullable=True),
         # Is the account disabled by the admin?
         sqlalchemy.Column(
-            "forzen",
+            "frozen",
             sqlalchemy.Boolean,
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
@@ -71,6 +71,7 @@ def users_schema(users_table: str) -> Table:
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
             server_default=sqlalchemy.sql.functions.current_timestamp(),
+            # NOTE: this does not work in postgres, have to use trigger
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
         # Identity Provider.
@@ -86,7 +87,7 @@ class UserInDB(ImmutBaseModel):
     userid: UUID4
     email: str
     full_name: Optional[str] = None
-    forzen: bool
+    frozen: bool
     email_verified: bool
     scope: str = ""
     picture: Optional[str] = None

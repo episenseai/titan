@@ -96,7 +96,7 @@ async def auth_callback(
     debug(user)
 
     if user is None:
-        await users_db.create_user(auth_user, disabled=False, email_verified=False)
+        await users_db.create_user(auth_user, email_verified=False)
         user = await users_db.get_user(auth_user.email)
         # unexpected: should never happen
         if user is None:
@@ -107,7 +107,7 @@ async def auth_callback(
         if user.idp != token.idp:
             raise auth_error
         # user is dsiabled by admin
-        if user.forzen:
+        if user.frozen:
             raise auth_error
         # update user info
         await users_db.try_update_user(user=user)

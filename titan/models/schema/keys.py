@@ -47,7 +47,7 @@ def keys_schema(keys_table: str, users_table: str) -> Table:
         sqlalchemy.Column("keypass", sqlalchemy.String(length=1024), nullable=False),
         # Is the key disabled by the admin?
         sqlalchemy.Column(
-            "forzen",
+            "frozen",
             sqlalchemy.Boolean,
             nullable=False,
             server_default=sqlalchemy.sql.expression.false(),
@@ -79,11 +79,18 @@ def keys_schema(keys_table: str, users_table: str) -> Table:
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
             server_default=sqlalchemy.sql.functions.current_timestamp(),
+            # NOTE: this does not work in postgres, have to use trigger
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
         # Optional description of the key.
         sqlalchemy.Column("description", sqlalchemy.String(length=255), nullable=True),
     )
+
+
+class NewKey(ImmutBaseModel):
+    keyid: UUID4
+    userid: UUID4
+    description: Optional[str] = None
 
 
 class KeyInDB(ImmutBaseModel):

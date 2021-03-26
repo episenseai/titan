@@ -43,8 +43,21 @@ def get_oauth2_settings() -> OAuth2Settings:
 
 get_oauth2_settings()
 
-USERS_DB_URL = "postgresql://localhost/testdb"
-USERS_TABLE_NAME = "users"
+TEST_PGSQL_DB = "postgresql://localhost/testdb"
 
-ADMINS_DB_URL = "postgresql://localhost/testdb"
-ADMINS_TABLE_NAME = "admins"
+TEST_USERS_TABLE = "testusers"
+TEST_ADMINS_TABLE = "testadmins"
+TEST_KEYS_TABLE = "testkeys"
+TEST_APIS_TABLE = "testapis"
+
+USERS_DATABASE_URL = TEST_PGSQL_DB
+USERS_TABLE = TEST_USERS_TABLE
+
+ADMINS_DATABASE_URL = TEST_PGSQL_DB
+ADMINS_TABLE = TEST_ADMINS_TABLE
+
+KEYS_DATABASE_URL = TEST_PGSQL_DB
+KEYS_TABLE = TEST_KEYS_TABLE
+
+APIS_DATABASE_URL = TEST_PGSQL_DB
+APIS_TABLE = TEST_APIS_TABLE
