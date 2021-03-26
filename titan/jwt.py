@@ -8,8 +8,8 @@ from pydantic import validator
 from pydantic.types import StrictInt, StrictStr
 
 from .auth.state import StateToken
-from .models.admins import AdminInDB
-from .models.users import UserInDB
+from .models.public.admins import AdminInDB
+from .models.public.users import UserInDB
 from .settings.jwt import get_jwt_config
 from .utils import ImmutBaseModel
 

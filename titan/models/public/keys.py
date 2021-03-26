@@ -5,11 +5,11 @@ from databases import Database
 from passlib.context import CryptContext
 from pydantic import UUID4
 
-from .pgsql import PgSQLTable
-from .schema.keys import AllKeysInDB, KeyInDB, NewKey, keys_schema
+from ..base import PgSQLBase
+from ..schema.keys import AllKeysInDB, KeyInDB, NewKey, keys_schema
 
 
-class KeysTable(PgSQLTable):
+class KeysTable(PgSQLBase):
     # 'bcrypt' truncates ones larger than 72 bytes. truncate_error=True will
     # raise a PasswordTruncateError.
     pwd_context: ClassVar[CryptContext] = CryptContext(

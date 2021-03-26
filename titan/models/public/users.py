@@ -2,13 +2,13 @@ from typing import Optional
 
 from databases import Database
 
-from ..auth.models import OAuth2AuthentcatedUser
-from ..exceptions.exc import DatabaseUserFetchError
-from .pgsql import PgSQLTable
-from .schema.users import UserInDB, users_schema
+from ...auth.models import OAuth2AuthentcatedUser
+from ...exceptions.exc import DatabaseUserFetchError
+from ..base import PgSQLBase
+from ..schema.users import UserInDB, users_schema
 
 
-class UsersTable(PgSQLTable):
+class UsersTable(PgSQLBase):
     def __init__(self, database_url: str, table_name: str):
         super().__init__(Database(database_url), users_schema(users_table=table_name))
 

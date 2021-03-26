@@ -2,12 +2,12 @@ from typing import Optional
 
 from databases import Database
 
-from ..exceptions.exc import DatabaseUserFetchError
-from .pgsql import PgSQLTable
-from .schema.admins import AdminInDB, admins_schema
+from ...exceptions.exc import DatabaseUserFetchError
+from ..base import PgSQLBase
+from ..schema.admins import AdminInDB, admins_schema
 
 
-class AdminsTable(PgSQLTable):
+class AdminsTable(PgSQLBase):
     def __init__(self, database_url: str, table_name: str):
         super().__init__(Database(database_url), admins_schema(admins_table=table_name))
 

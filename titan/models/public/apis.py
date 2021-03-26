@@ -2,8 +2,9 @@ from typing import Optional
 
 from databases import Database
 
-from ..exceptions import DatabaseUserFetchError
-from .schema.apis import ApiInDB, apis_schema
+from ...exceptions import DatabaseUserFetchError
+from ..base import PgSQLBase
+from ..schema.apis import ApiInDB, apis_schema
 
 # from passlib.context import CryptContext
 
@@ -12,7 +13,7 @@ from .schema.apis import ApiInDB, apis_schema
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", truncate_error=True)
 
 
-class ApisTable:
+class ApisTable(PgSQLBase):
     pass
 
     async def disable(self, apislug: str):

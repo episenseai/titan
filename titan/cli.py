@@ -1,18 +1,11 @@
-from contextlib import asynccontextmanager
-from typing import Union
-
 import typer
 from devtools import debug
 
-from .models.keys import KeysTable
-from .models.pgsql import PgSQLTable
-from .models.pgsql_manage import (
-    AdminsPgSQlManageTable,
-    ApisPgSQlManageTable,
-    KeysPgSQlManageTable,
-    PgSQLManageTable,
-    UsersPgSQlManageTable,
-)
+from .models.manage.admins import AdminsPgSQlManageTable
+from .models.manage.apis import ApisPgSQlManageTable
+from .models.manage.keys import KeysPgSQlManageTable
+from .models.manage.users import UsersPgSQlManageTable
+from .models.public.keys import KeysTable
 from .settings.oauth2 import (
     ADMINS_DATABASE_URL,
     ADMINS_TABLE,
@@ -28,37 +21,28 @@ from .utils import coro
 cli = typer.Typer()
 
 
-@asynccontextmanager
-async def connect(pg: Union[PgSQLTable, PgSQLManageTable]):
-    await pg.connect()
-    try:
-        yield
-    finally:
-        await pg.disconnect()
-
-
 @cli.command("new-users-table")
 @coro
 async def new_users_table(users_table: str = USERS_TABLE):
-    pgmanage = UsersPgSQlManageTable(USERS_DATABASE_URL, users_table)
-    async with connect(pgmanage):
-        await pgmanage.create_table()
+    pg = UsersPgSQlManageTable(USERS_DATABASE_URL, users_table)
+    async with pg:
+        await pg.create_table()
 
 
 @cli.command("new-admins-table")
 @coro
 async def new_admins_table(admins_table: str = ADMINS_TABLE):
-    pgmanage = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, admins_table)
-    async with connect(pgmanage):
-        await pgmanage.create_table()
+    pg = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, admins_table)
+    async with pg:
+        await pg.create_table()
 
 
 @cli.command("new-keys-table")
 @coro
 async def new_keys_table(keys_table: str = KEYS_TABLE, users_table: str = USERS_TABLE):
-    pgmanage = KeysPgSQlManageTable(KEYS_DATABASE_URL, keys_table, users_table)
-    async with connect(pgmanage):
-        await pgmanage.create_table()
+    pg = KeysPgSQlManageTable(KEYS_DATABASE_URL, keys_table, users_table)
+    async with pg:
+        await pg.create_table()
 
 
 @cli.command("new-apis-table")
@@ -68,30 +52,30 @@ async def new_apis_table(
     users_table: str = USERS_TABLE,
     keys_table: str = KEYS_TABLE,
 ):
-    pgmanage = ApisPgSQlManageTable(APIS_DATABASE_URL, apis_table, users_table, keys_table)
-    async with connect(pgmanage):
-        await pgmanage.create_table()
+    pg = ApisPgSQlManageTable(APIS_DATABASE_URL, apis_table, users_table, keys_table)
+    async with pg:
+        await pg.create_table()
 
 
 @cli.command("schema")
 def print_table_schema(table: str = typer.Argument(..., help="must be one of [users, admins, keys, apis]")):
     table = table.strip().lower()
-    pgmanage = None
+    pg = None
 
     if table == "users":
-        pgmanage = UsersPgSQlManageTable(USERS_DATABASE_URL, USERS_TABLE)
+        pg = UsersPgSQlManageTable(USERS_DATABASE_URL, USERS_TABLE)
     if table == "admins":
-        pgmanage = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, ADMINS_TABLE)
+        pg = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, ADMINS_TABLE)
     if table == "keys":
-        pgmanage = KeysPgSQlManageTable(KEYS_DATABASE_URL, KEYS_TABLE, USERS_TABLE)
+        pg = KeysPgSQlManageTable(KEYS_DATABASE_URL, KEYS_TABLE, USERS_TABLE)
     if table == "apis":
-        pgmanage = ApisPgSQlManageTable(APIS_DATABASE_URL, APIS_TABLE, USERS_TABLE, KEYS_TABLE)
+        pg = ApisPgSQlManageTable(APIS_DATABASE_URL, APIS_TABLE, USERS_TABLE, KEYS_TABLE)
 
-    if pgmanage is None:
+    if pg is None:
         typer.echo(message="table must be one of [users, admins, keys, apis]", err=True)
         exit(1)
 
-    print(pgmanage.str_schema())
+    print(pg.str_schema())
 
 
 @cli.command("new-admin")
@@ -99,7 +83,7 @@ def print_table_schema(table: str = typer.Argument(..., help="must be one of [us
 async def create_admin(
     email: str, username: str, password: str, scope: str, disabled: bool = False, table: str = ADMINS_TABLE
 ):
-    pgmanage = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, table)
+    pg = AdminsPgSQlManageTable(ADMINS_DATABASE_URL, table)
     values = {
         "email": email,
         "username": username,
@@ -107,8 +91,8 @@ async def create_admin(
         "scope": scope,
         "disabled": disabled,
     }
-    async with connect(pgmanage):
-        await pgmanage.insert(values=values)
+    async with pg:
+        await pg.insert(values=values)
 
 
 @cli.command("new-key")
@@ -121,7 +105,7 @@ async def create_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    async with connect(pg):
+    async with pg:
         val = await pg.create(userid, description)
         debug(val)
 
@@ -136,7 +120,7 @@ async def disable_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    async with connect(pg):
+    async with pg:
         await pg.disable(userid=userid, keyid=keyid)
 
 
@@ -150,7 +134,7 @@ async def delete_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    async with connect(pg):
+    async with pg:
         await pg.delete(userid=userid, keyid=keyid)
 
 
@@ -163,7 +147,7 @@ async def list_keys(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysTable(database_url, keys_table, users_table)
-    async with connect(pg):
+    async with pg:
         keys = await pg.get_all(userid=userid)
         debug(keys)
 
@@ -177,7 +161,7 @@ async def list_keys_manage(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysPgSQlManageTable(database_url, keys_table, users_table)
-    async with connect(pg):
+    async with pg:
         keys = await pg.get_all(userid=userid)
         debug(keys)
 
@@ -193,7 +177,7 @@ async def freeze_key(
     users_table: str = USERS_TABLE,
 ):
     pg = KeysPgSQlManageTable(database_url, keys_table, users_table)
-    async with connect(pg):
+    async with pg:
         if freeze:
             val = await pg.freeze(userid=userid, keyid=keyid)
         else:
