@@ -6,7 +6,7 @@ from typing import Optional, Union
 from pydantic import StrictStr
 
 from ..utils import ImmutBaseModel
-from .idp import IDP
+from .idp import IdentityProvider
 
 
 class StateToken(ImmutBaseModel):
@@ -25,7 +25,7 @@ class StateToken(ImmutBaseModel):
     # Login is successfull, by sending the state back to the
     # frontend.
     uistate: Optional[str] = None
-    idp: IDP
+    idp: IdentityProvider
     created_at: datetime
 
     @staticmethod
@@ -44,7 +44,7 @@ class StateToken(ImmutBaseModel):
         return state
 
     @classmethod
-    def mint(cls, idp: IDP, uistate: Optional[str] = None, with_nonce: bool = False) -> "StateToken":
+    def mint(cls, idp: IdentityProvider, uistate: Optional[str] = None, with_nonce: bool = False) -> "StateToken":
         state = cls.gen_state()
         if with_nonce:
             nonce = cls.gen_state()

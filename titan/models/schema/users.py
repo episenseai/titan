@@ -6,7 +6,7 @@ from pydantic import UUID4
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 
-from ...auth.models import IDP
+from ...auth.models import IdentityProvider
 from ...utils import ImmutBaseModel
 
 
@@ -93,7 +93,7 @@ class UserInDB(ImmutBaseModel):
     picture: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    idp: IDP
+    idp: IdentityProvider
     idp_userid: str
     idp_username: Optional[str] = None
 

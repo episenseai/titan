@@ -1,6 +1,6 @@
 from enum import Enum
 
 
-class IDP(str, Enum):
+class IdentityProvider(str, Enum):
     github = "github"
     google = "google"

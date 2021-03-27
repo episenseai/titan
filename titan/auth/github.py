@@ -12,7 +12,7 @@ from ..exceptions.exc import (
     OAuth2MissingInfo,
     OAuth2MissingScope,
 )
-from .models import IDP, OAuth2AuthClient, OAuth2AuthentcatedUser, OAuth2LoginClient
+from .models import IdentityProvider, OAuth2AuthClient, OAuth2AuthentcatedUser, OAuth2LoginClient
 from .state import StateToken
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
@@ -43,9 +43,9 @@ class GithubLoginClient(OAuth2LoginClient):
         )
 
     @property
-    def idp(self) -> IDP:
+    def idp(self) -> IdentityProvider:
         print("git idp")
-        return IDP.github
+        return IdentityProvider.github
 
     def get_query_params(self, token: StateToken, refresh_token: bool) -> dict[str, Any]:
         if refresh_token:
@@ -91,8 +91,8 @@ class GithubAuthClient(OAuth2AuthClient):
         )
 
     @property
-    def idp(self) -> IDP:
-        return IDP.github
+    def idp(self) -> IdentityProvider:
+        return IdentityProvider.github
 
     def get_query_params(self, code: str, token: StateToken) -> str:
         url_params = {

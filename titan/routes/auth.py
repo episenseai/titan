@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
-from ..auth.models import IDP
+from ..auth.models import IdentityProvider
 from ..auth.state import StateToken
 from ..exceptions.exc import OAuth2EmailPrivdedError, OAuth2MissingInfo, OAuth2MissingScope
 from ..jwt import AccessToken, TokenClaims
@@ -17,7 +17,7 @@ auth_router = APIRouter()
 
 @auth_router.get("/login")
 async def auth_url_redirect(
-    p: IDP = Query(...),
+    p: IdentityProvider = Query(...),
     u: Optional[str] = Query(None),
 ):
     auth_error = HTTPException(
@@ -26,15 +26,15 @@ async def auth_url_redirect(
     )
 
     # determine identity provider
-    if p == IDP.github:
+    if p == IdentityProvider.github:
         login_client = github_login_client
-    elif p == IDP.google:
+    elif p == IdentityProvider.google:
         login_client = google_login_client
     else:
         raise auth_error
 
     # include nonce if required
-    if p == IDP.google:
+    if p == IdentityProvider.google:
         with_nonce = True
     else:
         with_nonce = False
@@ -78,9 +78,9 @@ async def auth_callback(
         raise auth_error
 
     # determine identity provider
-    if token.idp == IDP.github:
+    if token.idp == IdentityProvider.github:
         auth_client = github_auth_client
-    elif token.idp == IDP.google:
+    elif token.idp == IdentityProvider.google:
         auth_client = google_auth_client
     else:
         raise auth_error
