@@ -24,7 +24,7 @@ class KeysTableInternal(PgSQLBase):
 
     async def get_all(self, userid: UUID4) -> AllKeysInDB:
         """
-        Get all keys 'frozen' or not since this is the admin interface.
+        Get all keys, including 'frozen' and 'deleted', since this is the admin interface.
         """
         query = self.table.select().where(self.table.c.userid == userid)
         records = await self.database.fetch_all(query=query)

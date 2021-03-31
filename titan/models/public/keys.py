@@ -41,7 +41,7 @@ class KeysTable(PgSQLBase):
 
     async def get(self, userid: UUID4, keyid: UUID4) -> Optional[KeyInDB]:
         """
-        If the key is frozen by the admin, behave as if the key was not found.
+        If the key was deleted by the user, do not return in any subsequent queries.
         """
         query = self.table.select().where(self.table.c.userid == userid).where(self.table.c.keyid == keyid)
         record = await self.database.fetch_one(query=query)
@@ -55,13 +55,13 @@ class KeysTable(PgSQLBase):
 
     async def get_all(self, userid: UUID4) -> AllKeysInDB:
         """
-        If the key is frozen by the admin, behave as if the key was not found.
+        If the key was deleted by the user, do not return in any subsequent queries.
         """
         query = self.table.select().where(self.table.c.userid == userid)
         records = await self.database.fetch_all(query=query)
         if not records:
             return AllKeysInDB(keys=[])
-        return AllKeysInDB(keys=({**record} for record in records if record.get("frozen") is False))
+        return AllKeysInDB(keys=({**record} for record in records if record.get("deleted") is False))
 
     async def create(self, userid: UUID4, description: str) -> Optional[tuple[NewKey, str]]:
         """
