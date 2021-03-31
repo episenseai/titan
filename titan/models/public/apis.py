@@ -1,7 +1,7 @@
 import secrets
-from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from typing import ClassVar, Optional
 
+from asyncpg.exceptions import ForeignKeyViolationError, UniqueViolationError
 from databases import Database
 from passlib.context import CryptContext
 from pydantic import UUID4
@@ -26,7 +26,7 @@ class APIsTable(PgSQLBase):
         )
 
     def gen_apislug(self) -> str:
-        return secrets.token_urlsafe(nbytes=64)
+        return secrets.token_urlsafe(nbytes=32)
 
     def generate_client_secret(self, nbytes: int = 48) -> str:
         """
@@ -46,13 +46,25 @@ class APIsTable(PgSQLBase):
         """
         If the API was deleted by the user, do not return in any subsequent queries.
         """
-        pass
+        query = self.table.select().where(self.table.c.userid == userid).where(self.table.c.apislug == apislug)
+        record = await self.database.fetch_one(query=query)
+        if record is None:
+            return None
+        api = APIInDB(**record)
+        if api.deleted:
+            # key has been deleted
+            return None
+        return api
 
     async def get_all(self, userid: UUID4) -> AllAPIsInDB:
         """
         If the API was deleted by the user, do not return in any subsequent queries.
         """
-        pass
+        query = self.table.select().where(self.table.c.userid == userid)
+        records = await self.database.fetch_all(query=query)
+        if not records:
+            return AllAPIsInDB(apis=[])
+        return AllAPIsInDB(apis=({**record} for record in records if record.get("deleted") is False))
 
     async def create(self, userid: UUID4, description: str) -> Optional[NewAPI]:
         """
@@ -93,7 +105,7 @@ class APIsTable(PgSQLBase):
         # of this happening is negligible.
         return None
 
-    async def update_secret(self, userid: UUID4, apislug: str) -> Optional[bool]:
+    async def update_secret(self, userid: UUID4, apislug: str) -> Optional[str]:
         """
         Regenerate a fresh client_secret for the API and invalidate the previous one.
         This can be used by the user in case their client_secret is compromised.

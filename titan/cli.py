@@ -95,6 +95,35 @@ async def create_api(
         debug(val)
 
 
+@cli.command("get-api")
+@coro
+async def get_api(
+    userid: str,
+    apislug: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = APIsTable(database_url, apis_table, users_table)
+    async with pg:
+        val = await pg.get(userid, apislug)
+        debug(val)
+
+
+@cli.command("list-apis")
+@coro
+async def list_apis(
+    userid: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = APIsTable(database_url, apis_table, users_table)
+    async with pg:
+        apis = await pg.get_all(userid=userid)
+        debug(apis)
+
+
 @cli.command("disable-api")
 @coro
 async def disable_api(
@@ -135,20 +164,6 @@ async def delete_api(
     pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
         await pg.delete(userid=userid, apislug=apislug)
-
-
-@cli.command("list-apis")
-@coro
-async def list_apis(
-    userid: str,
-    database_url: str = APIS_DATABASE_URL,
-    apis_table: str = APIS_TABLE,
-    users_table: str = USERS_TABLE,
-):
-    pg = APIsTable(database_url, apis_table, users_table)
-    async with pg:
-        apis = await pg.get_all(userid=userid)
-        debug(apis)
 
 
 @cli.command("list-apis-internal")
