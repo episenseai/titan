@@ -112,20 +112,51 @@ class APIsTable(PgSQLBase):
         """
         pass
 
-    async def toogle(self, userid: UUID4, apislug: str, disabled: bool) -> Optional[bool]:
-        pass
+    async def toggle(self, userid: UUID4, apislug: str, disabled: bool) -> Optional[bool]:
+        async with self.database.transaction():
+            api = await self.get(userid, apislug)
+            if api is None:
+                # No mactching key found
+                return None
+            if api.frozen:
+                # Key was frozen by admin
+                return None
+            if disabled == api.disabled:
+                # API does not need to be toggled. It's already in requested state.
+                return False
+
+            query = (
+                self.table.update()
+                .where(self.table.c.userid == userid)
+                .where(self.table.c.apislug == apislug)
+                .values({"disabled": disabled})
+                .returning(self.table.c.disabled)
+            )
+            result = await self.database.fetch_one(query=query)
+            if result is None:
+                # this should never happen as we have already checked the existence of api
+                # and we are doing a transaction.
+                return None
+
+            toggled = result.get("disabled")
+            if toggled == disabled:
+                # toggle successfull
+                return True
+            else:
+                # this should never happen
+                return False
 
     async def disable(self, userid: UUID4, apislug: str) -> Optional[bool]:
         """
         Temporarily disables the API.
         """
-        return self.toogle(userid, apislug, disabled=True)
+        return await self.toggle(userid, apislug, disabled=True)
 
     async def enable(self, userid: UUID4, apislug: str) -> Optional[bool]:
         """
         Reenaable the API
         """
-        return self.toogle(userid, apislug, disabled=False)
+        return await self.toggle(userid, apislug, disabled=False)
 
     async def delete(self, userid: UUID4, apislug: str) -> Optional[bool]:
         # TODO

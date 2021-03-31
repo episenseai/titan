@@ -135,7 +135,8 @@ async def disable_api(
 ):
     pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        await pg.disable(userid=userid, apislug=apislug)
+        val = await pg.disable(userid=userid, apislug=apislug)
+        debug(val)
 
 
 @cli.command("enable-api")
@@ -149,7 +150,8 @@ async def enable_api(
 ):
     pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        await pg.enable(userid=userid, apislug=apislug)
+        val = await pg.enable(userid=userid, apislug=apislug)
+        debug(val)
 
 
 @cli.command("delete-api")
