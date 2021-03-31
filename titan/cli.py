@@ -66,9 +66,15 @@ def print_table_schema(table: str = typer.Argument(..., help="must be one of [us
 @cli.command("new-admin")
 @coro
 async def create_admin(
-    email: str, username: str, password: str, scope: str, disabled: bool = False, table: str = ADMINS_TABLE
+    email: str,
+    username: str,
+    password: str,
+    scope: str,
+    disabled: bool = False,
+    database_url: str = ADMINS_DATABASE_URL,
+    admins_table: str = ADMINS_TABLE,
 ):
-    pg = AdminsTableInternal(ADMINS_DATABASE_URL, table)
+    pg = AdminsTableInternal(database_url, admins_table)
     values = {
         "email": email,
         "username": username,
@@ -214,6 +220,42 @@ async def freeze_api(
             val = await pg.freeze(userid=userid, apislug=apislug)
         else:
             val = await pg.unfreeze(userid=userid, apislug=apislug)
+        debug(val)
+
+
+@cli.command("freeze-user-email")
+@coro
+async def freeze_user_email(
+    email: str,
+    freeze: bool = True,
+    database_url=USERS_DATABASE_URL,
+    users_table: str = USERS_TABLE,
+):
+    pg = UsersTableInternal(database_url, users_table)
+
+    async with pg:
+        if freeze:
+            val = await pg.freeze_email(email=email)
+        else:
+            val = await pg.unfreeze_email(email=email)
+        debug(val)
+
+
+@cli.command("freeze-user-userid")
+@coro
+async def freeze_user_userid(
+    userid: str,
+    freeze: bool = True,
+    database_url=USERS_DATABASE_URL,
+    users_table: str = USERS_TABLE,
+):
+    pg = UsersTableInternal(database_url, users_table)
+
+    async with pg:
+        if freeze:
+            val = await pg.freeze_userid(userid=userid)
+        else:
+            val = await pg.unfreeze_userid(userid=userid)
         debug(val)
 
 
