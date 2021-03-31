@@ -165,7 +165,8 @@ async def delete_api(
 ):
     pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        await pg.delete(userid=userid, apislug=apislug)
+        val = await pg.delete(userid=userid, apislug=apislug)
+        debug(val)
 
 
 @cli.command("list-apis-internal")

@@ -35,10 +35,10 @@ class APIsTable(PgSQLBase):
         Resulting secret is thus 64 characters long which is less than 72, maximum
         password len supported by 'bcrypt` before truncation.
         """
-        # send back with reponse to the create key api call. Ask the client
+        # send back with reponse to the create api call. Ask the client
         # to save the client_secret and do not store this on the server.
         client_secret = secrets.token_urlsafe(nbytes)
-        # save the hash of the key for verifying the client_secret/key later.
+        # save the hash of the client_secret for verification.
         secret_hash = self.pwd_context.hash(client_secret)
         return (client_secret, secret_hash)
 
@@ -52,7 +52,7 @@ class APIsTable(PgSQLBase):
             return None
         api = APIInDB(**record)
         if api.deleted:
-            # key has been deleted
+            # api has been deleted
             return None
         return api
 
@@ -116,10 +116,10 @@ class APIsTable(PgSQLBase):
         async with self.database.transaction():
             api = await self.get(userid, apislug)
             if api is None:
-                # No mactching key found
+                # No matching api found
                 return None
             if api.frozen:
-                # Key was frozen by admin
+                # API was frozen by admin
                 return None
             if disabled == api.disabled:
                 # API does not need to be toggled. It's already in requested state.
@@ -154,10 +154,38 @@ class APIsTable(PgSQLBase):
 
     async def enable(self, userid: UUID4, apislug: str) -> Optional[bool]:
         """
-        Reenaable the API
+        Re-enable the API
         """
         return await self.toggle(userid, apislug, disabled=False)
 
     async def delete(self, userid: UUID4, apislug: str) -> Optional[bool]:
-        # TODO
-        pass
+        """
+        After the deletion API will not show up any query by the user. Deleted API can
+        still be accessed through admin interface.
+        """
+        async with self.database.transaction():
+            api = await self.get(userid, apislug)
+            if api is None:
+                # No matching API found
+                return None
+            if api.frozen:
+                # API was frozen by admin, can not delete it.
+                return None
+
+            query = (
+                self.table.update()
+                .where(self.table.c.userid == userid)
+                .where(self.table.c.apislug == apislug)
+                .values({"deleted": True})
+                .returning(self.table.c.deleted)
+            )
+            result = await self.database.fetch_one(query=query)
+            if result is None:
+                # this should never happen as we have already checked the existence
+                # of api and we are doing a transaction.
+                return None
+
+            if result.get("deleted") is True:
+                return True
+            # thi should never happen
+            return False
