@@ -70,20 +70,55 @@ async def create_admin(
     username: str,
     password: str,
     scope: str,
-    disabled: bool = False,
     database_url: str = ADMINS_DATABASE_URL,
     admins_table: str = ADMINS_TABLE,
 ):
     pg = AdminsTableInternal(database_url, admins_table)
-    values = {
+    value = {
         "email": email,
         "username": username,
         "password": password,
         "scope": scope,
-        "disabled": disabled,
     }
     async with pg:
-        await pg.insert(values=values)
+        val = await pg.create(value=value)
+        debug(val)
+
+
+@cli.command("freeze-admin-username")
+@coro
+async def freeze_admin_username(
+    username: str,
+    freeze: bool = True,
+    database_url=ADMINS_DATABASE_URL,
+    admins_table: str = ADMINS_TABLE,
+):
+    pg = AdminsTableInternal(database_url, admins_table)
+
+    async with pg:
+        if freeze:
+            val = await pg.freeze_username(username=username)
+        else:
+            val = await pg.unfreeze_username(username=username)
+        debug(val)
+
+
+@cli.command("freeze-admin-adminid")
+@coro
+async def freeze_admin_adminid(
+    adminid: str,
+    freeze: bool = True,
+    database_url=ADMINS_DATABASE_URL,
+    admins_table: str = ADMINS_TABLE,
+):
+    pg = AdminsTableInternal(database_url, admins_table)
+
+    async with pg:
+        if freeze:
+            val = await pg.freeze_adminid(adminid=adminid)
+        else:
+            val = await pg.unfreeze_adminid(adminid=adminid)
+        debug(val)
 
 
 @cli.command("new-api")

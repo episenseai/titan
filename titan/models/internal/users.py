@@ -55,13 +55,3 @@ class UsersTableInternal(PgSQLBase):
             return True
         # this should never happen
         return False
-
-    async def freeze(self, userid: UUID4, apislug: str):
-        """
-        Freeze the api. After being frozen the api is disabled and the user
-        can not take any action on it.
-        """
-        return await self.toogle(userid, apislug, frozen=True)
-
-    async def unfreeze(self, userid: UUID4, apislug: UUID4):
-        return await self.toogle(userid, apislug, frozen=False)
