@@ -1,4 +1,3 @@
 from .admins import AdminsTableManage
-from .apis import ApisTableManage
-from .keys import KeysTableManage
+from .apis import APIsTableManage
 from .users import UsersTableManage

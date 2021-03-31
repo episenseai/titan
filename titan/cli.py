@@ -1,16 +1,14 @@
 import typer
 from devtools import debug
 
-from .models.internal import AdminsTableInternal, ApisTableInternal, KeysTableInternal, UsersTableInternal
-from .models.manage import AdminsTableManage, ApisTableManage, KeysTableManage, UsersTableManage
-from .models.public import AdminsTable, ApisTable, KeysTable, UsersTable
+from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
+from .models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
+from .models.public import AdminsTable, APIsTable, UsersTable
 from .settings.oauth2 import (
     ADMINS_DATABASE_URL,
     ADMINS_TABLE,
     APIS_DATABASE_URL,
     APIS_TABLE,
-    KEYS_DATABASE_URL,
-    KEYS_TABLE,
     USERS_DATABASE_URL,
     USERS_TABLE,
 )
@@ -35,28 +33,19 @@ async def new_admins_table(admins_table: str = ADMINS_TABLE):
         await pg.create_table()
 
 
-@cli.command("new-keys-table")
-@coro
-async def new_keys_table(keys_table: str = KEYS_TABLE, users_table: str = USERS_TABLE):
-    pg = KeysTableManage(KEYS_DATABASE_URL, keys_table, users_table)
-    async with pg:
-        await pg.create_table()
-
-
 @cli.command("new-apis-table")
 @coro
 async def new_apis_table(
     apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
-    keys_table: str = KEYS_TABLE,
 ):
-    pg = ApisTableManage(APIS_DATABASE_URL, apis_table, users_table, keys_table)
+    pg = APIsTableManage(APIS_DATABASE_URL, apis_table, users_table)
     async with pg:
         await pg.create_table()
 
 
 @cli.command("schema")
-def print_table_schema(table: str = typer.Argument(..., help="must be one of [users, admins, keys, apis]")):
+def print_table_schema(table: str = typer.Argument(..., help="must be one of [users, admins, apis]")):
     table = table.strip().lower()
     pg = None
 
@@ -64,13 +53,11 @@ def print_table_schema(table: str = typer.Argument(..., help="must be one of [us
         pg = UsersTableManage(USERS_DATABASE_URL, USERS_TABLE)
     if table == "admins":
         pg = AdminsTableManage(ADMINS_DATABASE_URL, ADMINS_TABLE)
-    if table == "keys":
-        pg = KeysTableManage(KEYS_DATABASE_URL, KEYS_TABLE, USERS_TABLE)
     if table == "apis":
-        pg = ApisTableManage(APIS_DATABASE_URL, APIS_TABLE, USERS_TABLE, KEYS_TABLE)
+        pg = APIsTableManage(APIS_DATABASE_URL, APIS_TABLE, USERS_TABLE)
 
     if pg is None:
-        typer.echo(message="table must be one of [users, admins, keys, apis]", err=True)
+        typer.echo(message="table must be one of [users, admins, apis]", err=True)
         exit(1)
 
     print(pg.str_schema())
@@ -93,93 +80,107 @@ async def create_admin(
         await pg.insert(values=values)
 
 
-@cli.command("new-key")
+@cli.command("new-api")
 @coro
-async def create_key(
+async def create_api(
     userid: str,
-    description: str = "adding test key",
-    database_url: str = KEYS_DATABASE_URL,
-    keys_table: str = KEYS_TABLE,
+    description: str = "adding test api",
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
 ):
-    pg = KeysTable(database_url, keys_table, users_table)
+    pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
         val = await pg.create(userid, description)
         debug(val)
 
 
-@cli.command("disable-key")
+@cli.command("disable-api")
 @coro
-async def disable_key(
+async def disable_api(
     userid: str,
-    keyid: str,
-    database_url: str = KEYS_DATABASE_URL,
-    keys_table: str = KEYS_TABLE,
+    apislug: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
 ):
-    pg = KeysTable(database_url, keys_table, users_table)
+    pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        await pg.disable(userid=userid, keyid=keyid)
+        await pg.disable(userid=userid, apislug=apislug)
 
 
-@cli.command("delete-key")
+@cli.command("enable-api")
 @coro
-async def delete_key(
+async def enable_api(
     userid: str,
-    keyid: str,
-    database_url: str = KEYS_DATABASE_URL,
-    keys_table: str = KEYS_TABLE,
+    apislug: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
 ):
-    pg = KeysTable(database_url, keys_table, users_table)
+    pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        await pg.delete(userid=userid, keyid=keyid)
+        await pg.enable(userid=userid, apislug=apislug)
 
 
-@cli.command("list-keys")
+@cli.command("delete-api")
 @coro
-async def list_keys(
+async def delete_api(
     userid: str,
-    database_url: str = KEYS_DATABASE_URL,
-    keys_table: str = KEYS_TABLE,
+    apislug: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
 ):
-    pg = KeysTable(database_url, keys_table, users_table)
+    pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        keys = await pg.get_all(userid=userid)
-        debug(keys)
+        await pg.delete(userid=userid, apislug=apislug)
 
 
-@cli.command("list-keys-manage")
+@cli.command("list-apis")
 @coro
-async def list_keys_manage(
+async def list_apis(
     userid: str,
-    database_url: str = KEYS_DATABASE_URL,
-    keys_table: str = KEYS_TABLE,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
 ):
-    pg = KeysTableInternal(database_url, keys_table, users_table)
+    pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        keys = await pg.get_all(userid=userid)
-        debug(keys)
+        apis = await pg.get_all(userid=userid)
+        debug(apis)
 
 
-@cli.command("freeze-key")
+@cli.command("list-apis-internal")
 @coro
-async def freeze_key(
+async def list_apis_manage(
     userid: str,
-    keyid: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = APIsTableInternal(database_url, apis_table, users_table)
+    async with pg:
+        apis = await pg.get_all(userid=userid)
+        debug(apis)
+
+
+@cli.command("freeze-api")
+@coro
+async def freeze_api(
+    userid: str,
+    apislug: str,
     freeze: bool = True,
-    database_url: str = KEYS_DATABASE_URL,
-    keys_table: str = KEYS_TABLE,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
     users_table: str = USERS_TABLE,
 ):
-    pg = KeysTableInternal(database_url, keys_table, users_table)
+    pg = APIsTableInternal(database_url, apis_table, users_table)
     async with pg:
         if freeze:
-            val = await pg.freeze(userid=userid, keyid=keyid)
+            val = await pg.freeze(userid=userid, apislug=apislug)
         else:
-            val = await pg.unfreeze(userid=userid, keyid=keyid)
+            val = await pg.unfreeze(userid=userid, apislug=apislug)
         debug(val)
 
 

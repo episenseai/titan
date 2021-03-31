@@ -1,4 +1,3 @@
 from .admins import AdminInDB, AdminsTable
-from .apis import ApiInDB, ApisTable
-from .keys import KeyInDB, KeysTable
+from .apis import APIInDB, APIsTable
 from .users import UserInDB, UsersTable

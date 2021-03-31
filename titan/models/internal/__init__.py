@@ -1,4 +1,3 @@
 from .admins import AdminsTableInternal
-from .apis import ApisTableInternal
-from .keys import KeysTableInternal
+from .apis import APIsTableInternal
 from .users import UsersTableInternal

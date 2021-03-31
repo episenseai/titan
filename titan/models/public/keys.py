@@ -87,7 +87,7 @@ class KeysTable(PgSQLBase):
         newkey = await self.database.fetch_one(query=query)
         return (NewKey(**newkey), client_secret)
 
-    async def toogle_disabled(self, userid: UUID4, keyid: UUID4, disabled: bool) -> Optional[bool]:
+    async def toogle(self, userid: UUID4, keyid: UUID4, disabled: bool) -> Optional[bool]:
         async with self.database.transaction():
             key = await self.get(userid, keyid)
             if key is None:
@@ -125,10 +125,11 @@ class KeysTable(PgSQLBase):
                 return False
 
     async def disable(self, userid: UUID4, keyid: UUID4) -> Optional[bool]:
-        return await self.toogle_disabled(userid, keyid, disabled=True)
+        # TODO: How to disable the key associated with an active API
+        return await self.toogle(userid, keyid, disabled=True)
 
     async def enable(self, userid: UUID4, keyid: UUID4) -> Optional[bool]:
-        return await self.toogle_disabled(userid, keyid, disabled=False)
+        return await self.toogle(userid, keyid, disabled=False)
 
     async def delete(self, userid: UUID4, keyid: UUID4) -> Optional[bool]:
         async with self.database.transaction():

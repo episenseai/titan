@@ -9,7 +9,7 @@ from sqlalchemy.sql.schema import ForeignKey, Table
 from ...utils import ImmutBaseModel
 
 
-def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) -> Table:
+def apis_schema(apis_table: str, users_table: str) -> Table:
     """
     (apislug) is the primary key of this table
 
@@ -17,11 +17,9 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
         associate this endpoint with a built model to access the model through the
         endpoint. ***
     """
-    from .keys import keys_schema
     from .users import users_schema
 
-    users_table = users_schema(users_table=users_table_name)
-    keys_table = keys_schema(keys_table=keys_table_name, users_table=users_table_name)
+    users_table = users_schema(users_table=users_table)
 
     metadata = sqlalchemy.MetaData()
 
@@ -47,16 +45,10 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
             ForeignKey(users_table.c.userid),
             nullable=False,
         ),
-        # Foreign key 'keyid' from 'keys' table associated with each api.
-        # Key used by the api for authentication. It may be null while creating the
-        # api but a key must be associated at a later time to use the api.
-        sqlalchemy.Column(
-            "keyid",
-            postgresql.UUID(),
-            ForeignKey(keys_table.c.keyid),
-            # We can update this later.
-            nullable=True,
-        ),
+        # Hash of the secret key. Send the original unhashed secret back to the client
+        # when creating a new key, so that the client can use this secret to access
+        # apis. Store only the salted hash of the key for verification.
+        sqlalchemy.Column("secret_hash", sqlalchemy.String(length=1024), nullable=False),
         # Is the api disabled by the admin?
         sqlalchemy.Column(
             "frozen",
@@ -95,20 +87,31 @@ def apis_schema(apis_table: str, users_table_name: str, keys_table_name: str) ->
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
         # Optional description of the api.
-        sqlalchemy.Column("description", sqlalchemy.String(length=255), nullable=True),
+        sqlalchemy.Column("description", sqlalchemy.String(length=255), nullable=False),
     )
 
 
-class ApiInDB(ImmutBaseModel):
+class NewAPI(ImmutBaseModel):
     apislug: str
     userid: UUID4
-    keyid: UUID4
+    client_secret: str
+    description: Optional[str] = None
+
+
+class APIInDB(ImmutBaseModel):
+    apislug: str
+    userid: UUID4
+    secret_hash: str
     frozen: bool
     disabled: bool
     deleted: bool
     created_at: datetime
     updated_at: datetime
-    description: Optional[str] = None
+    description: str
 
     class Config:
         orm_mode = True
+
+
+class AllAPIsInDB(ImmutBaseModel):
+    apis: list[APIInDB]

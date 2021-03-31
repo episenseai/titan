@@ -83,7 +83,7 @@ def keys_schema(keys_table: str, users_table: str) -> Table:
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
         # Optional description of the key.
-        sqlalchemy.Column("description", sqlalchemy.String(length=255), nullable=True),
+        sqlalchemy.Column("description", sqlalchemy.String(length=255), nullable=False),
     )
 
 
@@ -102,7 +102,7 @@ class KeyInDB(ImmutBaseModel):
     deleted: bool
     created_at: datetime
     updated_at: datetime
-    description: Optional[str] = None
+    description: str
 
     class Config:
         orm_mode = True
