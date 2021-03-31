@@ -13,8 +13,7 @@ class UsersTable(PgSQLBase):
 
     async def get(self, email: Optional[str] = None, userid: Optional[UUID4] = None) -> Optional[UserInDB]:
         """
-        User might be frozen might be user. Take into account the frozen attribute
-        while making decisions.
+        User returned might be `frozen`. One should take this into account at the call site.
         """
         if email:
             query = self.table.select().where(self.table.c.email == email)
