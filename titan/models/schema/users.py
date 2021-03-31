@@ -83,6 +83,15 @@ def users_schema(users_table: str) -> Table:
     )
 
 
+class NewUser(ImmutBaseModel):
+    userid: UUID4
+    email: str
+    scope: str
+    full_name: Optional[str] = None
+    picture: Optional[str] = None
+    email_verified: bool
+
+
 class UserInDB(ImmutBaseModel):
     userid: UUID4
     email: str

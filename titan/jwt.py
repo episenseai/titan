@@ -7,9 +7,6 @@ from jose.exceptions import JOSEError, JWTError
 from pydantic import validator
 from pydantic.types import StrictInt, StrictStr
 
-from .auth.state import StateToken
-from .models.public.admins import AdminInDB
-from .models.public.users import UserInDB
 from .settings.jwt import get_jwt_config
 from .utils import ImmutBaseModel
 
@@ -39,7 +36,7 @@ class AccessToken(Token):
     full_name: Optional[str] = None
     picture: Optional[str] = None
     # some user state that was supplied at the start of the login flow
-    u: Optional[str] = None
+    ustate: Optional[str] = None
 
 
 class RefreshToken(Token):
@@ -52,8 +49,6 @@ TOKEN_ISS = "https://episense.ai"
 class TokenClaims(ImmutBaseModel):
     # subject
     sub: Union[StrictStr, StrictInt]
-    # issuer
-    iss: Optional[Union[StrictStr, StrictInt]]
     # audience
     aud: Optional[Union[StrictStr, Sequence[StrictStr]]] = None
     # scope
@@ -68,10 +63,11 @@ class TokenClaims(ImmutBaseModel):
             return " ".join(values)
         return values
 
-    def _mint_token(self, ttype: str) -> EncodedJWTToken:
+    def mint(self, ttype: str) -> EncodedJWTToken:
         config = get_jwt_config()
 
         current_time = datetime.utcnow()
+
         if ttype == "access_token":
             exp = current_time + config.authjwt_access_token_expires
             expires_in = int(config.authjwt_access_token_expires / timedelta(seconds=1)) - 10
@@ -84,73 +80,63 @@ class TokenClaims(ImmutBaseModel):
         else:
             raise RuntimeError("Can not issue token")
 
-        custom_claims = {}
-        custom_claims["ttype"] = ttype
+        # token claims
+        claims = {}
+        # sub + aud + scope claims
+        claims.update(self.dict(exclude_none=True))
+        # custom claims
+        claims.update(ttype=ttype)
+        # reserved_claims
+        claims.update({"iss": TOKEN_ISS, "exp": exp, "jti": uuid.uuid4().hex})
 
-        reserved_claims = {"iss": TOKEN_ISS, "exp": exp, "jti": uuid.uuid4().hex}
-
-        token = jwt.encode(
-            {**self.dict(exclude_none=True), **custom_claims, **reserved_claims},
-            config.get_secret_key("encode"),
-            algorithm=config.authjwt_algorithm,
-        )
+        token = jwt.encode(claims, config.get_secret_key("encode"), algorithm=config.authjwt_algorithm)
 
         return EncodedJWTToken(token=token, expires_in=expires_in)
 
     def mint_access_token(
-        self,
-        user: UserInDB,
-        token: Optional[StateToken] = None,
+        self, full_name: Optional[str] = None, picture: Optional[str] = None, ustate: Optional[str] = None
     ) -> AccessToken:
-        encoded_token = self._mint_token("access_token")
-        if token:
-            u = token.uistate
-        else:
-            u = None
+        encoded_token = self.mint("access_token")
+
         return AccessToken(
             access_token=encoded_token.token,
             token_type="Bearer",
             expires_in=encoded_token.expires_in,
-            userid=str(user.userid),
-            full_name=user.full_name,
-            picture=user.picture,
-            u=u,
+            userid=str(self.sub),
+            full_name=full_name,
+            picture=picture,
+            ustate=ustate,
         )
 
     def mint_refresh_token(self) -> RefreshToken:
-        encoded_token = self._mint_token("refresh_token")
+        encoded_token = self.mint("refresh_token")
         return RefreshToken(refresh_token=encoded_token.token)
 
     def mint_access_refresh_token(
-        self,
-        user: UserInDB,
-        token: Optional[StateToken] = None,
+        self, full_name: Optional[str] = None, picture: Optional[str] = None, ustate: Optional[str] = None
     ) -> AccessToken:
-        atoken = self._mint_token("access_token")
-        rtoken = self._mint_token("refresh_token")
-        if token:
-            u = token.uistate
-        else:
-            u = None
+        atoken = self.mint("access_token")
+        rtoken = self.mint("refresh_token")
+
         return AccessToken(
             access_token=atoken.token,
             token_type="Bearer",
             expires_in=atoken.expires_in,
             refresh_token=rtoken.token,
-            userid=str(user.userid),
-            full_name=user.full_name,
-            picture=user.picture,
-            u=u,
+            userid=str(self.sub),
+            full_name=full_name,
+            picture=picture,
+            ustate=ustate,
         )
 
-    def mint_xaccess_token(self, admin: AdminInDB):
-        encoded_token = self._mint_token("xaccess_token")
+    def mint_xaccess_token(self) -> XAccessToken:
+        encoded_token = self.mint("xaccess_token")
 
         return XAccessToken(
             access_token=encoded_token.token,
             token_type="Bearer",
             expires_in=encoded_token.expires_in,
-            userid=str(admin.adminid),
+            userid=str(self.sub),
         )
 
 

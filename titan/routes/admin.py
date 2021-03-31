@@ -28,7 +28,7 @@ async def get_access_token(
         raise auth_error
 
     # Check if the user is in 'users' database
-    user = await users_db.get_user(userid=decoded_token["sub"])
+    user = await users_db.get(userid=decoded_token["sub"])
     if user is None:
         raise auth_error
 
@@ -48,6 +48,6 @@ async def get_access_token(
 
     # Mint Token
     token_claims = TokenClaims(sub=str(admin.adminid), scope=admin.scope)
-    xaccess_token = token_claims.mint_xaccess_token(admin=admin)
+    xaccess_token = token_claims.mint_xaccess_token()
 
     return xaccess_token

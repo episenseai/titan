@@ -18,7 +18,7 @@ auth_router = APIRouter()
 @auth_router.get("/login")
 async def auth_url_redirect(
     p: IdentityProvider = Query(...),
-    u: Optional[str] = Query(None),
+    ustate: Optional[str] = Query(None),
 ):
     auth_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -38,7 +38,7 @@ async def auth_url_redirect(
         with_nonce = True
     else:
         with_nonce = False
-    state_token = StateToken.mint(idp=p, uistate=u, with_nonce=with_nonce)
+    state_token = StateToken.mint(idp=p, ustate=ustate, with_nonce=with_nonce)
 
     debug(state_token, login_client, state_tokens_db)
     auth_url = login_client.create_auth_url(state_token)
@@ -72,7 +72,7 @@ async def auth_callback(
 
     debug(code, state, scope, request.query_params)
 
-    # verify that we have issued the token and pop it
+    # verify that we have issued the state token and pop it
     token = state_tokens_db.pop_and_verify(state)
     if not token:
         raise auth_error
@@ -92,30 +92,49 @@ async def auth_callback(
         print(exc)
         raise auth_error
 
-    user = await users_db.get_user(auth_user.email)
+    user = await users_db.get_by_email(email=auth_user.email)
     debug(user)
 
     if user is None:
-        await users_db.create_user(auth_user, email_verified=False)
-        user = await users_db.get_user(auth_user.email)
-        # unexpected: should never happen
-        if user is None:
+        # scope assgined to the user when he first signs up
+        SIGNUP_SCOPE = "basic"
+        # we are not doing out own email verification for now.
+        SIGNUP_EMAIL_VERIFIED = False
+        # create a new user
+        new_user = await users_db.create(
+            email=auth_user.email,
+            idp=auth_user.idp.value,
+            idp_userid=auth_user.idp_userid,
+            idp_username=auth_user.idp_username,
+            full_name=auth_user.full_name,
+            picture=auth_user.picture,
+            scope=SIGNUP_SCOPE,
+            email_verified=SIGNUP_EMAIL_VERIFIED,
+        )
+        debug(new_user)
+        # unexpected: should not happen
+        if new_user is None:
             raise auth_error
+
+        user = new_user
     else:
-        # user has already signed up with the email using a different
-        # identity provider.
+        # user has already signed up with the email using a different identity provider.
         if user.idp != token.idp:
             raise auth_error
-        # user is dsiabled by admin
+        # user is disabled by admin
         if user.frozen:
             raise auth_error
-        # update user info
-        await users_db.try_update_user(user=user)
 
-    # send a confirmation email and verify the email (our own verification)
-    # activate the account after manual approval
+        # update user info
+        await users_db.update(user=user)
+
+    # Do we need to manually approve the account before activation????
+
+    # issue token
     token_claims = TokenClaims(sub=str(user.userid), scope=user.scope)
-    access_token = token_claims.mint_access_refresh_token(user=user, token=token)
+    access_token = token_claims.mint_access_refresh_token(
+        full_name=user.full_name, picture=user.picture, ustate=token.ustate
+    )
     debug(access_token)
 
     return access_token
