@@ -126,7 +126,12 @@ async def auth_callback(
             raise auth_error
 
         # update user info
-        await users_db.update(user=user)
+        await users_db.update(
+            user=user,
+            idp_username=auth_user.idp_username,
+            full_name=auth_user.full_name,
+            picture=auth_user.picture,
+        )
 
     # Do we need to manually approve the account before activation????
 

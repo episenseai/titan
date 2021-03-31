@@ -46,13 +46,7 @@ class UsersTable(PgSQLBase):
         email_verified: bool = False,
     ) -> Optional[NewUser]:
         """
-        email: str
-        full_name: Optional[str] = None
-        picture: Optional[str] = None
-        idp: IdentityProvider
-        idp_userid: str
-        idp_username: Optional[str] = None
-        provider_creds: Optional[OAuth2AuthentcatedCreds] = None
+        Create a new user with `email` as the primary key.
         """
         value = {
             "email": email,
@@ -84,5 +78,40 @@ class UsersTable(PgSQLBase):
             return None
         return NewUser(**newuser)
 
-    async def update(self, user: UserInDB):
-        pass
+    async def update(
+        self,
+        user: UserInDB,
+        idp_username: Optional[str] = None,
+        full_name: Optional[str] = None,
+        picture: Optional[str] = None,
+    ) -> bool:
+        """
+        Update user info only if they have changed and the user if not frozen.
+        """
+        value = {}
+
+        if idp_username != user.idp_username:
+            value.update(idp_username=idp_username)
+        if full_name != user.full_name:
+            value.update(full_name=full_name)
+        if picture != user.picture:
+            value.update(picture=picture)
+
+        # none of the values need updating
+        if not value:
+            return False
+        # do not update the users, if frozen
+        query = (
+            self.table.update()
+            .where(self.table.c.userid == user.userid)
+            .where(self.table.c.email == user.email)
+            .where(self.table.c.frozen == False)  # noqa
+            .values(value)
+            .returning(self.table.c.userid)
+        )
+        result = await self.database.fetch_one(query=query)
+        if result is None:
+            # No matching records found. This could either be due to non-existent
+            # userid or the user was frozen.
+            return False
+        return True
