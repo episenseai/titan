@@ -109,8 +109,30 @@ class APIsTable(PgSQLBase):
         """
         Regenerate a fresh client_secret for the API and invalidate the previous one.
         This can be used by the user in case their client_secret is compromised.
+
+        If the API is frozen the updating is not allowed.
         """
-        pass
+        client_secret, secret_hash = self.generate_client_secret()
+
+        # do not update if the API is frozen
+        query = (
+            self.table.update()
+            .where(self.table.c.userid == userid)
+            .where(self.table.c.apislug == apislug)
+            .where(self.table.c.frozen == False)  # noqa
+            .values({"secret_hash": secret_hash})
+            .returning(self.table.c.apislug)
+        )
+        result = await self.database.fetch_one(query=query)
+        if result is None:
+            # No matching records found. This could either be due to non-existent
+            # userid/apislug or the api was frozen.
+            return None
+        # this equality test is gratuitous
+        if apislug == result.get("apislug"):
+            return client_secret
+        # this should never happen
+        return None
 
     async def toggle(self, userid: UUID4, apislug: str, disabled: bool) -> Optional[bool]:
         async with self.database.transaction():

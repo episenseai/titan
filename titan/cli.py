@@ -169,6 +169,21 @@ async def delete_api(
         debug(val)
 
 
+@cli.command("update-api")
+@coro
+async def update_api(
+    userid: str,
+    apislug: str,
+    database_url: str = APIS_DATABASE_URL,
+    apis_table: str = APIS_TABLE,
+    users_table: str = USERS_TABLE,
+):
+    pg = APIsTable(database_url, apis_table, users_table)
+    async with pg:
+        val = await pg.update_secret(userid=userid, apislug=apislug)
+        debug(val)
+
+
 @cli.command("list-apis-internal")
 @coro
 async def list_apis_manage(
