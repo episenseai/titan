@@ -28,19 +28,30 @@ class APIsTable(PgSQLBase):
     def gen_apislug(self) -> str:
         return secrets.token_urlsafe(nbytes=32)
 
-    def generate_client_secret(self, nbytes: int = 48) -> str:
+    def generate_client_secret(self, nbytes: int = 48) -> Optional[tuple[str, str]]:
         """
         48 bytes = 384 bits of randomness should suffice for now. 'client_secret'
         is base64 encoded so each byte results in approximately 1.3 characters.
         Resulting secret is thus 64 characters long which is less than 72, maximum
         password len supported by 'bcrypt` before truncation.
         """
-        # send back with reponse to the create api call. Ask the client
-        # to save the client_secret and do not store this on the server.
-        client_secret = secrets.token_urlsafe(nbytes)
-        # save the hash of the client_secret for verification.
-        secret_hash = self.pwd_context.hash(client_secret)
-        return (client_secret, secret_hash)
+        try:
+            # send back with reponse to the create api call. Ask the client
+            # to save the client_secret and do not store this on the server.
+            client_secret = secrets.token_urlsafe(nbytes)
+            # save the hash of the client_secret for verification.
+            secret_hash = self.pwd_context.hash(client_secret)
+            return (client_secret, secret_hash)
+        except Exception as exc:
+            print(f"coud not generate client_secret: {exc}")
+            return None
+
+    def verify_client_secret(self, client_secret: str, secret_hash: str) -> bool:
+        try:
+            return self.pwd_context.verify(client_secret, secret_hash)
+        except Exception as exc:
+            print(f"could bot verify client_secret: {exc}")
+            return False
 
     async def get(self, userid: UUID4, apislug: str) -> Optional[APIInDB]:
         """
@@ -71,7 +82,12 @@ class APIsTable(PgSQLBase):
         Generates a client_secret and associates with the API. Return the client_secret
         and save only the hash of it to for verification.
         """
-        client_secret, secret_hash = self.generate_client_secret()
+        res = self.generate_client_secret()
+        if res is None:
+            # error happened while generating client_secret
+            return None
+
+        client_secret, secret_hash = res
 
         # trying a few times to get a unique apislug, in case the it already
         # exists in database.
@@ -98,8 +114,8 @@ class APIsTable(PgSQLBase):
             except UniqueViolationError:
                 print("generated apislug exists in database. trying again...")
                 pass
-            except ForeignKeyViolationError:
-                # userid does not exist
+            except ForeignKeyViolationError as exc:
+                print(f"could not create api: {exc}")
                 return None
         # Could not generate a unique apislug after a few tries. Ideally the chances
         # of this happening is negligible.
@@ -112,7 +128,12 @@ class APIsTable(PgSQLBase):
 
         If the API is frozen the updating is not allowed.
         """
-        client_secret, secret_hash = self.generate_client_secret()
+        res = self.generate_client_secret()
+        if res is None:
+            # error happened while generating client_secret
+            return None
+
+        client_secret, secret_hash = res
 
         # do not update if the API is frozen
         query = (

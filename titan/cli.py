@@ -132,8 +132,12 @@ async def create_api(
 ):
     pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        val = await pg.create(userid, description)
-        debug(val)
+        new_api = await pg.create(userid, description)
+        debug(new_api)
+        if new_api:
+            api = await pg.get(userid=new_api.userid, apislug=new_api.apislug)
+            verified = pg.verify_client_secret(new_api.client_secret, api.secret_hash)
+            debug(verified)
 
 
 @cli.command("get-api")
@@ -147,8 +151,8 @@ async def get_api(
 ):
     pg = APIsTable(database_url, apis_table, users_table)
     async with pg:
-        val = await pg.get(userid, apislug)
-        debug(val)
+        api = await pg.get(userid, apislug)
+        debug(api)
 
 
 @cli.command("list-apis")
