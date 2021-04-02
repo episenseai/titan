@@ -4,12 +4,11 @@
   "formatters": {
     "default": {
       "()": "uvicorn.logging.DefaultFormatter",
-      "fmt": "%(asctime)s | %(name)-15s | %(levelprefix)-8s | %(filename)s:%(funcName)s:%(lineno)d | %(message)s",
-      "use_colors": true
+      "fmt": "%(asctime)s | %(name)-14s | %(levelprefix)-8s| %(filename)s:%(funcName)s:%(lineno)d | %(message)s"
     },
     "access": {
       "()": "uvicorn.logging.AccessFormatter",
-      "fmt": "%(asctime)s | %(name)-15s | %(levelprefix)-8s | %(filename)s:%(funcName)s:%(lineno)d | %(client_addr)s - \"%(request_line)s\" %(status_code)s"
+      "fmt": "%(asctime)s | %(name)-14s | %(levelprefix)-8s| %(filename)s:%(funcName)s:%(lineno)d | %(client_addr)s - \"%(request_line)s\" %(status_code)s"
     }
   },
   "handlers": {
@@ -26,7 +25,9 @@
   },
   "loggers": {
     "uvicorn": { "handlers": ["default"], "level": "INFO" },
+    "fastapi": { "handlers": ["default"], "level": "INFO" },
     "uvicorn.error": { "level": "INFO" },
     "uvicorn.access": { "handlers": ["access"], "level": "INFO", "propagate": false }
-  }
+  },
+  "root": { "handlers": ["default"], "level": "INFO", "propagate": false }
 }
