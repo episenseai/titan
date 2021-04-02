@@ -4,6 +4,7 @@ file_uploads
 .vscode
 .code-workspace
 .vim
+*.log
 
 pyrightconfig.json
 .ipynb_checkpoints
