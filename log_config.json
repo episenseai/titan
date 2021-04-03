@@ -25,7 +25,7 @@
   },
   "loggers": {
     "uvicorn": { "handlers": ["default"], "level": "INFO" },
-    "uvicorn.error": { "level": "INFO" },
+    "uvicorn.error": { "handlers": ["default"], "level": "INFO", "propagate": false },
     "uvicorn.access": { "handlers": ["access"], "level": "INFO", "propagate": false },
     "fastapi": { "handlers": ["default"], "level": "INFO", "propagate": false },
     "titan": { "handlers": ["default"], "level": "INFO", "propagate": false }
