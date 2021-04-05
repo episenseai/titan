@@ -27,6 +27,10 @@ class UsersTable(PgSQLBase):
             return None
         return UserInDB(**record)
 
+    @staticmethod
+    def is_frozen(user: UserInDB) -> bool:
+        return user.frozen
+
     async def get_by_email(self, email: str) -> Optional[UserInDB]:
         return await self.get(email=email)
 

@@ -4,19 +4,19 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from pydantic import UUID4, Field
 
-from ...jwt import DecodedToken
 from ...logger import logger
 from ...models.public.apis import APIState
 from ...settings.backends import apis_db
+from ...tokens import DecodedToken
 from ...utils import ImmutBaseModel, StrictBaseModel
-from ..depends import empty_body, get_decoded_token, store_decoded_token, validate_ttype_is_access
+from ..depends import empty_body, get_decoded_token, store_decoded_token, validate_ttype_access
 
-api_router = APIRouter(
+apis_router = APIRouter(
     prefix="/api",
     tags=["api"],
     dependencies=[
         Depends(store_decoded_token),
-        Depends(validate_ttype_is_access),
+        Depends(validate_ttype_access),
     ],
 )
 
@@ -30,7 +30,7 @@ class GETAPIResponse(ImmutBaseModel):
     description: str
 
 
-@api_router.get("/{apislug}", response_model=GETAPIResponse)
+@apis_router.get("/{apislug}", response_model=GETAPIResponse)
 async def get(
     apislug: str = Path(..., min_length=1),
     token: DecodedToken = Depends(get_decoded_token),
@@ -50,7 +50,7 @@ class GETAllAPIResponse(ImmutBaseModel):
     apis: list[GETAPIResponse]
 
 
-@api_router.get("", response_model=GETAllAPIResponse)
+@apis_router.get("", response_model=GETAllAPIResponse)
 async def get_all(token: DecodedToken = Depends(get_decoded_token)):
     apis = await apis_db.get_all(userid=token.sub)
     logger.info(f"{len(apis.apis)} apis found for user={token.sub}")
@@ -68,7 +68,7 @@ class POSTAPIResponse(ImmutBaseModel):
     description: Optional[str] = None
 
 
-@api_router.post("", response_model=POSTAPIResponse)
+@apis_router.post("", response_model=POSTAPIResponse)
 async def create(
     data: POSTAPIRequest,
     token: DecodedToken = Depends(get_decoded_token),
@@ -88,7 +88,7 @@ class DELETEAPIResponse(ImmutBaseModel):
     deleted: bool
 
 
-@api_router.delete(
+@apis_router.delete(
     "/{apislug}",
     response_model=DELETEAPIResponse,
     dependencies=[Depends(empty_body)],
@@ -118,7 +118,7 @@ class POSTToggleResponse(ImmutBaseModel):
     disabled: bool
 
 
-@api_router.post(
+@apis_router.post(
     "/disable/{apislug}",
     response_model=POSTToggleResponse,
     dependencies=[Depends(empty_body)],
@@ -144,7 +144,7 @@ async def disable(
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@api_router.post(
+@apis_router.post(
     "/enable/{apislug}",
     response_model=POSTToggleResponse,
     dependencies=[Depends(empty_body)],
@@ -175,7 +175,7 @@ class POSTKeyResponse(ImmutBaseModel):
     client_secret: str
 
 
-@api_router.post(
+@apis_router.post(
     "/key/{apislug}",
     response_model=POSTKeyResponse,
     dependencies=[Depends(empty_body)],

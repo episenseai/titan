@@ -8,14 +8,8 @@ from jose import jwt
 from jose.exceptions import JOSEError
 from pydantic import AnyHttpUrl, SecretStr
 
-from ..exceptions.exc import (
-    JSONDecodeError,
-    JWTDecodeError,
-    Oauth2AuthorizationError,
-    OAuth2EmailPrivdedError,
-    OAuth2MissingInfo,
-    OAuth2MissingScope,
-)
+from ..exceptions.exc import Oauth2AuthError, OAuth2EmailPrivdedError
+from ..logger import logger
 from .models import IdentityProvider, OAuth2AuthClient, OAuth2AuthentcatedUser, OAuth2LoginClient
 from .state import StateToken
 
@@ -67,7 +61,6 @@ class GoogleLoginClient(OAuth2LoginClient):
         # nonce is present if using OpenId Connect to get the id_token
         if token.nonce is not None:
             url_params.update({"nonce": token.nonce})
-        print(f"{url_params=}")
         return url_params
 
     def get_urlencoded_query_params(self, token: StateToken, refresh_token: bool) -> str:
@@ -119,8 +112,11 @@ class GoogleAuthClient(OAuth2AuthClient):
         return urlencode(self.get_query_params(code, token))
 
     async def update_jwks_keys(self):
+        # Sanity check
         if self.jwks_uri is None:
-            raise ValueError("Missing 'jwks_uri' key in GoogleAuthClient")
+            err_msg = "Google JWK keys: missing 'jwks_uri' key in GoogleAuthClient"
+            logger.critical(err_msg)
+            raise Oauth2AuthError(err_msg)
 
         keys = self.jwks_keys.get("keys", None)
         expiration_datetime = self.jwks_keys.get("expiration_datetime", None)
@@ -137,27 +133,39 @@ class GoogleAuthClient(OAuth2AuthClient):
                         expiration_datetime = datetime.utcnow() + timedelta(hours=1)
                         self.jwks_keys.update({"expiration_datetime": expiration_datetime})
                     except Exception as exc:
-                        raise JSONDecodeError(f"Error decoding keys from {self.jwks_uri=}")
-                    # update with freshly downloaded keys
+                        err_msg = f"Google JWS keys decode: {exc}"
+                        logger.exception(err_msg)
+                        raise Oauth2AuthError(err_msg)
+                    # Update stale JWS keys with freshly downloaded ones
                     self.jwks_keys.update(jwks_keys)
                 elif self.jwks_keys.get("keys", None):
-                    raise RuntimeError(f"Error instantiating 'jwks_keys' from {self.jwks_uri=}")
+                    err_msg = f"Google JWS keys instantiation error: {self.jwks_uri=} {response.status_code=}"
+                    logger.critical(err_msg)
+                    raise Oauth2AuthError(err_msg)
                 else:
-                    print(f"WARINING: using stale keys. Unable to reach {self.jwks_uri}")
+                    logger.warning(
+                        f"Google JWS keys are stale: Could not reach {self.jwks_uri=} {response.status_code=}"
+                    )
             except httpx.RequestError as exc:
-                raise Oauth2AuthorizationError(f"Error calling {exc.request.url} endpoint") from exc
+                err_msg = f"Google JWS keys endpoint: {exc=} {exc.request.url}"
+                logger.error(err_msg)
+                raise Oauth2AuthError(err_msg) from exc
+            except Exception as exc:
+                err_msg = f"Unknown: Google JWS keys endpoint: {exc=} {exc.request.url}"
+                logger.exception(err_msg)
+                raise Oauth2AuthError(err_msg) from exc
 
     async def validate_id_token(self, jwt_token: str, access_token: str) -> dict[str, Any]:
         await self.update_jwks_keys()
         keys = self.jwks_keys.get("keys", None)
         if not keys:
-            RuntimeError("Somethin fatal happened: 'jwks_keys' keys are missing for google")
+            err_msg = f"Somethin fatal happened: 'jwks_keys' keys are missing for google {self.jwks_keys=}"
+            logger.critical(err_msg)
+            Oauth2AuthError(err_msg)
         try:
             success = False
             for key in keys:
                 try:
-                    print(jwt_token, "\n\n")
-                    print(access_token)
                     options = {
                         "verify_signature": True,
                         "verify_aud": False,
@@ -175,16 +183,19 @@ class GoogleAuthClient(OAuth2AuthClient):
                         audience=self.client_id,
                         access_token=access_token,
                     )
-                    debug(data)
                     success = True
                     break
                 except JOSEError as exc:
                     pass
             if not success:
-                raise JWTDecodeError("Error validating 'id_token'. None of 'jwks_keys' worked.")
+                err_msg = f"Google JWS keys could not validate id token: {self.jwks_keys=}"
+                logger.critical(err_msg)
+                raise Oauth2AuthError(err_msg)
             return data
         except Exception as exc:
-            raise Oauth2AuthorizationError(f"Unknown Error during 'id_token' validation for google {exc=}")
+            err_msg = f"Google validate id token with JWS keys: {exc}"
+            logger.exception(err_msg)
+            raise Oauth2AuthError(err_msg)
 
     # https://developers.google.com/identity/protocols/oauth2/scopes#openid_connect
     def validate_requested_scope(self, granted_scope: Union[str, list[str]]) -> tuple[bool, str]:
@@ -199,7 +210,6 @@ class GoogleAuthClient(OAuth2AuthClient):
                     missing_scope.append(scope)
         if not missing_scope:
             return (True, "")
-        print("missing_scope....................")
         return (False, " ".join(missing_scope))
 
     async def authorize(self, code: str, token: StateToken) -> OAuth2AuthentcatedUser:
@@ -207,51 +217,67 @@ class GoogleAuthClient(OAuth2AuthClient):
             try:
                 params = self.get_query_params(code, token)
                 response = await client.post(str(self.token_url), params=params)
-                debug(response, response.request, response.headers, response.text)
                 response.raise_for_status()
             except httpx.RequestError as exc:
-                raise Oauth2AuthorizationError(f"Resquest Error for token from google {exc.request}") from exc
+                err_msg = f"Google auth endpoint: {exc}"
+                logger.error(err_msg)
+                raise Oauth2AuthError(err_msg) from exc
             except Exception as exc:
-                raise Oauth2AuthorizationError(
-                    f"Response code != 20x for token request from google {exc.response}"
-                ) from exc
+                # This exception includes status_code != 200 error
+                err_msg = f"Google auth endpoint: {response.status_code=} {exc=}"
+                logger.error(err_msg)
+                raise Oauth2AuthError(err_msg) from exc
 
         try:
             auth_dict: dict = response.json()
-            debug(auth_dict)
         except Exception as exc:
-            raise JSONDecodeError("Error decoding token reponse (JSON) from google") from exc
+            err_msg = "Google auth JSON response decode: {exc}"
+            logger.exception(err_msg)
+            raise Oauth2AuthError(err_msg) from exc
 
         for key in ("access_token", "token_type", "scope", "expires_in"):
             if key not in auth_dict:
-                raise Oauth2AuthorizationError(f"Missing '{key}' in token reponse from google")
+                err_msg = f"Google auth response: missing ({key=})"
+                logger.error(err_msg)
+                raise Oauth2AuthError(err_msg)
 
         token_type: str = auth_dict.get("token_type")
         if not token_type or token_type.lower() != "bearer":
-            raise Oauth2AuthorizationError(f"{token_type=} != 'bearer' for token response from google")
+            # Sanity check
+            err_msg = f"Google auth endpoint: ({token_type=}) != Bearer"
+            logger.error(err_msg)
+            raise Oauth2AuthError(err_msg)
 
         ok, missing_scope = self.validate_requested_scope(auth_dict.get("scope"))
         if not ok:
-            raise OAuth2MissingScope(f"Scope mising from google auth {missing_scope=}")
+            err_msg = f"Google missing scope: ({missing_scope=})"
+            logger.error(err_msg)
+            raise Oauth2AuthError(err_msg)
 
         user_dict = {}
 
         # nonce parameter is present for OpenId Connect
         if token.nonce is not None:
             id_token = auth_dict.get("id_token", None)
+            # This should not happen
             if id_token is None:
-                raise Oauth2AuthorizationError("Missing 'id_token' in auth_response from google")
+                err_msg = "Google auth missing 'id_token'"
+                logger.critical(err_msg)
+                raise Oauth2AuthError(err_msg)
             else:
                 access_token = auth_dict.get("access_token")
                 user_dict = await self.validate_id_token(id_token, access_token)
         if token.nonce != user_dict.get("nonce", None):
-            raise Oauth2AuthorizationError("Error 'nonce' value in the id_token did not match stored value")
+            err_msg = f"Suspcious google auth nonce mismatch: {user_dict=}"
+            logger.error(err_msg)
+            raise Oauth2AuthError(err_msg)
 
         primary_email = user_dict.get("email") or ""
+
         if user_dict.get("email_verified", False) is not True:
-            raise OAuth2EmailPrivdedError(
-                f"Your primary github email='{primary_email}' is not verified. Verify an try again."
-            )
+            err_msg = "Google primary email not verified"
+            logger.error(err_msg)
+            raise OAuth2EmailPrivdedError(err_msg)
 
         return self.user(user_dict, auth_dict)
 
@@ -261,15 +287,15 @@ class GoogleAuthClient(OAuth2AuthClient):
             'iss': 'https://accounts.google.com',
             'azp': 'xxxxxxxxxxxx-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com',
             'aud': 'xxxxxxxxxxxx-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com',
-            'sub': '117179329109786909605',
-            'email': 'sushant.mithila89@gmail.com',
+            'sub': '117179329109786909885',
+            'email': 'test@gmail.com',
             'email_verified': True,
             'at_hash': 'pzMAnE_HNlI_qpLHZrijtw',
             'nonce': 'jeCk1aC0XxEhOQZxuLxLXPclFiB4EVU1e4g3auV0ioXBevUP',
-            'name': 'Sushant Kumar',
+            'name': 'Test User',
             'picture': 'https://lh3.googleusercontent.com/a-/AOh14GhZ3sVR6Jwzx6UmP-ytYGYok-DlQ7By9oCrGz-aqA=s96-c',
-            'given_name': 'Sushant',
-            'family_name': 'Kumar',
+            'given_name': 'Test',
+            'family_name': 'User',
             'locale': 'en',
             'iat': 1615159453,
             'exp': 1615163053,
@@ -277,7 +303,7 @@ class GoogleAuthClient(OAuth2AuthClient):
         """
         for key in ("sub", "email"):
             if key not in user_dict:
-                raise OAuth2MissingInfo(f"Missing {key=} for user info during google auth")
+                raise Oauth2AuthError(f"Missing {key=} for user info during google auth")
         full_name = user_dict.get("name", None)
         if full_name is None:
             given_name = user_dict.get("given_name", None)

@@ -18,51 +18,15 @@ class AccessTokenRequired(AuthException):
     pass
 
 
-class RefreshTokenRequired(AuthException):
-    pass
-
-
-class FreshTokenRequired(AuthException):
-    pass
-
-
-class RevokedAccessToken(AuthException):
-    pass
-
-
-class RevokedRefreshToken(AuthException):
-    pass
-
-
-class RevokedFreshToken(AuthException):
-    pass
-
-
 class PasswordTooSmall(Exception):
     pass
 
 
-class JSONEncodeError(AuthException):
-    pass
-
-
-class JSONDecodeError(AuthException):
-    pass
-
-
-class Oauth2AuthorizationError(AuthException):
-    pass
-
-
-class OAuth2MissingScope(AuthException):
+class Oauth2AuthError(AuthException):
     pass
 
 
 class OAuth2EmailPrivdedError(AuthException):
-    pass
-
-
-class OAuth2MissingInfo(AuthException):
     pass
 
 

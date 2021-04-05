@@ -3,8 +3,8 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 
-from ..jwt import DecodedToken, validate_get_decoded_token
 from ..logger import logger
+from ..tokens import DecodedToken, validate_token, TokenType
 from ..utils import StrictBaseModel
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
@@ -14,7 +14,7 @@ async def store_decoded_token(request: Request, token: str = Depends(oauth2_sche
     """
     Store the `DecodedToken` into `request.state`
     """
-    decoded_token = await validate_get_decoded_token(token)
+    decoded_token = await validate_token(token)
     if decoded_token is None:
         error_msg = "Authentication Error: Invalid credentials"
         logger.error(f"{error_msg} TOKEN={token}")
@@ -33,8 +33,8 @@ async def get_decoded_token(request: Request) -> DecodedToken:
     """
     try:
         return request.state.decoded_token
-    except AttributeError as exc:
-        logger.critical("get_decoded_token should be called after store_decoded_token", exc_info=exc)
+    except AttributeError:
+        logger.error("get_decoded_token should be called after store_decoded_token", exc_info=1)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication Error",
@@ -42,30 +42,36 @@ async def get_decoded_token(request: Request) -> DecodedToken:
         )
 
 
-async def validate_ttype_is_access(request: Request) -> None:
+async def validate_ttype(request: Request, ttype: TokenType) -> None:
     """
     This should never return `None`. `store_decoded_token` should have been
     called before calling this function.
     """
     try:
         decoded_token: DecodedToken = request.state.decoded_token
-        if decoded_token.ttype != "access_token":
-            error_msg = "Authentication Error: Invalid credentials."
-            logger.error(
-                f"{error_msg} Needed 'access_token' but found '{decoded_token.ttype}' for user={decoded_token.sub}"
-            )
+        if decoded_token.ttype != ttype:
+            error_msg = "Not authenticated"
+            logger.error(f"{error_msg}: ({ttype=}, {decoded_token.ttype=}, user={decoded_token.sub})")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=error_msg,
                 headers={"WWW-Authenticate": "Bearer"},
             )
-    except AttributeError as exc:
-        logger.critical("validate_ttype_access should be called after store_decoded_token", exc_info=exc)
+    except AttributeError:
+        logger.error("validate_ttype should be called after store_decoded_token", exc_info=1)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication Error",
+            detail="Authentication error",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+async def validate_ttype_access(request: Request) -> None:
+    return await validate_ttype(request, ttype=TokenType.ACCESS_TOKEN)
+
+
+async def validate_ttype_xaccess(request: Request) -> None:
+    return await validate_ttype(request, ttype=TokenType.XACCESS_TOKEN)
 
 
 class EmptyBody(StrictBaseModel):

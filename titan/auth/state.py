@@ -44,7 +44,7 @@ class StateToken(ImmutBaseModel):
         return state
 
     @classmethod
-    def mint(cls, idp: IdentityProvider, ustate: Optional[str] = None, with_nonce: bool = False) -> "StateToken":
+    def issue(cls, idp: IdentityProvider, ustate: Optional[str] = None, with_nonce: bool = False) -> "StateToken":
         state = cls.gen_state()
         if with_nonce:
             nonce = cls.gen_state()

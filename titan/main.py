@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 
 from .exceptions.passwd import passwd_exception_handlers
-from .routes.admin import admin_router
-from .routes.auth import auth_router
-from .routes.public.apis import api_router
+from .routes.public import admins_router, apis_router, users_router
 from .settings.backends import admins_db, apis_db, state_tokens_db, users_db
 
 all_exception_handlers = {}
@@ -28,6 +26,6 @@ async def shutdown():
     await state_tokens_db.disconnect()
 
 
-app.include_router(auth_router)
-app.include_router(admin_router)
-app.include_router(api_router)
+app.include_router(users_router)
+app.include_router(admins_router)
+app.include_router(apis_router)

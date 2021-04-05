@@ -16,6 +16,7 @@ AVAILABLE_COMMANDS=(
 	'disable-api'
 	'enable-api'
 	'newkey-api'
+	'admin-login'
 )
 
 if [[ -z $TOKEN ]]; then
@@ -81,6 +82,8 @@ elif [[ $COMMAND == "newkey-api" ]]; then
 	print_data
 	check_apislug
 	URL="$BASEURL/api/key/$APISLUG"
+elif [[ $COMMAND == "admin-login" ]]; then
+	URL="$BASEURL/x/token"
 else
 	echo "COMMAND = \"$COMMAND\" not found" 1>&2
 	help_exit
@@ -93,6 +96,11 @@ if [[ $COMMAND == "create-api" ]] ||
 	[[ $COMMAND == "newkey-api" ]]; then
 	debug_curl
 	curl $* -d "$DATA" -L -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -X POST "$URL" | jq
+
+elif [[ $COMMAND == "admin-login" ]]; then
+	debug_curl
+	# ./curly -F 'username=username' -F 'password=something'
+	curl $* -L -H "Authorization: Bearer $TOKEN" -X POST "$URL" | jq
 
 elif [[ $COMMAND == "delete-api" ]]; then
 	debug_curl
