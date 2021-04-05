@@ -16,7 +16,7 @@ async def store_decoded_token(request: Request, token: str = Depends(oauth2_sche
     """
     decoded_token = await validate_token(token)
     if decoded_token is None:
-        error_msg = "Authentication Error: Invalid credentials"
+        error_msg = "Authentication Error"
         logger.error(f"{error_msg} TOKEN={token}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

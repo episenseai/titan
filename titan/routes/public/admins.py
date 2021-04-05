@@ -79,4 +79,5 @@ async def get_xaccess_token(
     # TODO: Invalidate previous xaccess_token for users when issuing a new one
     claims = TokenClaims(sub=admin.adminid, scope=admin.scope)
     issued_token = claims.issue_xaccess_token()
+    logger.info(f"Issued xaccess_token: (user={user.userid}, admin={admin.adminid})")
     return issued_token

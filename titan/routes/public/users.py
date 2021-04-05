@@ -157,9 +157,11 @@ async def get_access_token(
     # TODO: Invalidate previous tokens for users when issuing a new one
     claims = TokenClaims(sub=user.userid, scope=user.scope)
     issued_token = claims.issue_access_token()
-    return Token(
+    token = Token(
         full_name=auth_user.full_name,
         picture=auth_user.picture,
         ustate=state_token.ustate,
         **issued_token.dict(),
     )
+    logger.info(f"Issued access_token: (user={claims.sub}, idp={user.idp})")
+    return token
