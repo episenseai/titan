@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [[ $DEBUG_ALL == 1 ]]; then
+	set -x
+fi
+
+BASEURL="http://localhost:8000"
+
+AVAILABLE_COMMANDS=(
+	'get-api'
+	'list-apis'
+	'create-api'
+	'delete-api'
+	'disable-api'
+	'enable-api'
+	'newkey-api'
+)
+
+if [[ -z $TOKEN ]]; then
+	echo "TOKEN='' missing"
+	exit 1
+fi
+
+check_apislug() {
+	if [[ -z $APISLUG ]]; then
+		echo "APISLUG missing..."
+		exit 1
+	fi
+}
+
+check_data() {
+	if [[ -z $DATA ]]; then
+		echo "No JSON data provided to send"
+		exit 1
+	fi
+}
+
+print_data() {
+	echo Sending data ..... 1>&2
+	echo "$DATA" | jq 1>&2
+	echo
+}
+
+debug_curl() {
+	if [[ $DEBUG == 1 ]]; then
+		set -x
+	fi
+}
+
+help_exit() {
+	echo
+	echo AVAILABLE_COMMANDS:
+	for c in "${AVAILABLE_COMMANDS[@]}"; do
+		echo "  $c"
+	done
+	echo DEBUG_ALL=1 \(debug whole script\)
+	echo DEBUG=1 \(debug curl\)
+	exit 1
+}
+
+## CHECK WHICH COMMAND to execute
+if [[ $COMMAND == "get-api" ]] ||
+	[[ $COMMAND == "delete-api" ]]; then
+	check_apislug
+	URL="$BASEURL/api/$APISLUG"
+elif [[ $COMMAND == "list-apis" ]]; then
+	URL="$BASEURL/api"
+elif [[ $COMMAND == "create-api" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/api"
+elif [[ $COMMAND == "disable-api" ]]; then
+	check_apislug
+	URL="$BASEURL/api/disable/$APISLUG"
+elif [[ $COMMAND == "enable-api" ]]; then
+	check_apislug
+	URL="$BASEURL/api/enable/$APISLUG"
+elif [[ $COMMAND == "newkey-api" ]]; then
+	print_data
+	check_apislug
+	URL="$BASEURL/api/key/$APISLUG"
+else
+	echo "COMMAND = \"$COMMAND\" not found" 1>&2
+	help_exit
+fi
+
+# Request
+if [[ $COMMAND == "create-api" ]] ||
+	[[ $COMMAND == "disable-api" ]] ||
+	[[ $COMMAND == "enable-api" ]] ||
+	[[ $COMMAND == "newkey-api" ]]; then
+	debug_curl
+	curl $* -d "$DATA" -L -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -X POST "$URL" | jq
+
+elif [[ $COMMAND == "delete-api" ]]; then
+	debug_curl
+	curl $* -L -H "Authorization: Bearer $TOKEN" -X DELETE "$URL" | jq
+
+elif [[ $COMMAND == "get-api" ]] ||
+	[[ $COMMAND == "list-apis" ]]; then
+	debug_curl
+	curl $* -L -H "Authorization: Bearer $TOKEN" "$URL" | jq
+else
+	echo "COMMAND=$COMMAND not yet implemeted"
+	exit 1
+fi

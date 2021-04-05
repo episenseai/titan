@@ -2,7 +2,7 @@ from devtools import debug
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
 
-from ..jwt import TokenClaims, XAccessToken, validate_and_get_token_claims_dict
+from ..jwt import TokenClaims, XAccessToken, validate_get_decoded_token
 from ..settings.backends import admins_db, users_db
 
 admin_router = APIRouter(prefix="/x", tags=["x"])
@@ -22,7 +22,7 @@ async def get_access_token(
     )
 
     # Validate Bearer token
-    decoded_token = await validate_and_get_token_claims_dict(authorization.credentials)
+    decoded_token = await validate_get_decoded_token(authorization.credentials)
     # decoded_token be an access_token not refresh_token/xaccess_token
     if decoded_token is None or decoded_token.get("ttype", None) != "access_token":
         raise auth_error

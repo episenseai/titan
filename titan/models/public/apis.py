@@ -1,4 +1,5 @@
 import secrets
+from enum import Enum, unique
 from typing import ClassVar, Optional
 
 from asyncpg.exceptions import ForeignKeyViolationError, UniqueViolationError
@@ -8,6 +9,15 @@ from pydantic import UUID4
 
 from ..base import PgSQLBase
 from ..schema.apis import AllAPIsInDB, APIInDB, NewAPI, apis_schema
+
+
+@unique
+class APIState(str, Enum):
+    FORZEN = "forzen"
+    DISABLED = "disabled"
+    ENABLED = "enabled"
+    DELETED = "deleted"
+    UNKNOWN = "unknown"
 
 
 class APIsTable(PgSQLBase):
@@ -155,7 +165,7 @@ class APIsTable(PgSQLBase):
         # this should never happen
         return None
 
-    async def toggle(self, userid: UUID4, apislug: str, disabled: bool) -> Optional[bool]:
+    async def toggle(self, userid: UUID4, apislug: str, disabled: bool) -> Optional[APIState]:
         async with self.database.transaction():
             api = await self.get(userid, apislug)
             if api is None:
@@ -163,10 +173,13 @@ class APIsTable(PgSQLBase):
                 return None
             if api.frozen:
                 # API was frozen by admin
-                return None
-            if disabled == api.disabled:
-                # API does not need to be toggled. It's already in requested state.
-                return False
+                return APIState.FORZEN
+            if disabled and api.disabled:
+                # API is already disabled
+                return APIState.DISABLED
+            if (not disabled) and (not api.frozen):
+                # API is already enabled
+                return APIState.ENABLED
 
             query = (
                 self.table.update()
@@ -177,31 +190,30 @@ class APIsTable(PgSQLBase):
             )
             result = await self.database.fetch_one(query=query)
             if result is None:
-                # this should never happen as we have already checked the existence of api
-                # and we are doing a transaction.
-                return None
-
-            toggled = result.get("disabled")
-            if toggled == disabled:
-                # toggle successfull
-                return True
+                # this should never happen as we have already checked the existence
+                # of api and we are doing a transaction.
+                return APIState.UNKNOWN
+            if disabled and result.get("disabled"):
+                return APIState.DISABLED
+            if (not disabled) and (not result.get("disabled")):
+                return APIState.ENABLED
             else:
                 # this should never happen
-                return False
+                return APIState.UNKNOWN
 
-    async def disable(self, userid: UUID4, apislug: str) -> Optional[bool]:
+    async def disable(self, userid: UUID4, apislug: str) -> Optional[APIState]:
         """
         Temporarily disables the API.
         """
         return await self.toggle(userid, apislug, disabled=True)
 
-    async def enable(self, userid: UUID4, apislug: str) -> Optional[bool]:
+    async def enable(self, userid: UUID4, apislug: str) -> Optional[APIState]:
         """
         Re-enable the API
         """
         return await self.toggle(userid, apislug, disabled=False)
 
-    async def delete(self, userid: UUID4, apislug: str) -> Optional[bool]:
+    async def delete(self, userid: UUID4, apislug: str) -> Optional[APIState]:
         """
         After the deletion API will not show up any query by the user. Deleted API can
         still be accessed through admin interface.
@@ -213,7 +225,7 @@ class APIsTable(PgSQLBase):
                 return None
             if api.frozen:
                 # API was frozen by admin, can not delete it.
-                return None
+                return APIState.FORZEN
 
             query = (
                 self.table.update()
@@ -226,9 +238,10 @@ class APIsTable(PgSQLBase):
             if result is None:
                 # this should never happen as we have already checked the existence
                 # of api and we are doing a transaction.
-                return None
+
+                return APIState.UNKNOWN
 
             if result.get("deleted") is True:
-                return True
+                return APIState.DELETED
             # thi should never happen
-            return False
+            return APIState.UNKNOWN

@@ -17,6 +17,14 @@ class AssignValidateBaseModel(BaseModel):
         validate_assignment = True
 
 
+class StrictBaseModel(BaseModel):
+    class Config:
+        allow_mutation = False
+        validate_all = True
+        # whether to ignore, allow, or forbid extra attributes during model initialization.
+        extra = "forbid"
+
+
 def coro(f):
     """
     Coroutine function decorator.

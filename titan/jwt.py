@@ -4,9 +4,10 @@ from typing import Optional, Sequence, Union
 
 from jose import jwt
 from jose.exceptions import JOSEError, JWTError
-from pydantic import validator
+from pydantic import UUID4, validator
 from pydantic.types import StrictInt, StrictStr
 
+from .logger import logger
 from .settings.jwt import get_jwt_config
 from .utils import ImmutBaseModel
 
@@ -140,7 +141,14 @@ class TokenClaims(ImmutBaseModel):
         )
 
 
-async def validate_and_get_token_claims_dict(raw_token: str) -> Optional[dict]:
+class DecodedToken(ImmutBaseModel):
+    sub: UUID4
+    scope: str
+    ttype: str
+    jti: UUID4
+
+
+async def validate_get_decoded_token(raw_token: str) -> Optional[DecodedToken]:
     config = get_jwt_config()
 
     try:
@@ -156,7 +164,11 @@ async def validate_and_get_token_claims_dict(raw_token: str) -> Optional[dict]:
             },
             issuer=TOKEN_ISS,
         )
-        return decoded_token
+        logger.info(f"Decoded Bearer token for sub={decoded_token['sub']}")
+        return DecodedToken(**decoded_token)
     except (JWTError, JOSEError) as exc:
-        print(exc)
+        logger.error(f"JWT decode error: {exc}")
+        return None
+    except Exception:
+        logger.exception("Unknown JWT decode error")
         return None

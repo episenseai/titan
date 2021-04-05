@@ -1,10 +1,11 @@
-from databases import Database
 from typing import Optional
+
+from asyncpg.exceptions import UniqueViolationError
+from databases import Database
 from pydantic import UUID4
 
 from ..base import PgSQLBase
 from ..schema.admins import admins_schema
-from asyncpg.exceptions import UniqueViolationError
 
 
 class AdminsTableInternal(PgSQLBase):

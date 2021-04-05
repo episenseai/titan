@@ -121,7 +121,7 @@ async def freeze_admin_adminid(
         debug(val)
 
 
-@cli.command("new-api")
+@cli.command("create-api")
 @coro
 async def create_api(
     userid: str,
@@ -214,9 +214,9 @@ async def delete_api(
         debug(val)
 
 
-@cli.command("update-api")
+@cli.command("newkey-api")
 @coro
-async def update_api(
+async def key_api(
     userid: str,
     apislug: str,
     database_url: str = APIS_DATABASE_URL,
