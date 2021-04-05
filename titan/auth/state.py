@@ -5,6 +5,7 @@ from typing import Optional, Union
 
 from pydantic import StrictStr
 
+from ..logger import logger
 from ..utils import ImmutBaseModel
 from .idp import IdentityProvider
 
@@ -65,10 +66,10 @@ class StateTokensDB:
         self.db = {}
 
     async def connect(self):
-        pass
+        logger.info("Connected to state_tokens_db")
 
     async def disconnect(self):
-        pass
+        logger.info("Disconnected from state_tokens_db")
 
     def store(self, token: StateToken):
         self.db[token.state] = token

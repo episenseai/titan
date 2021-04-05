@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from .exceptions.passwd import passwd_exception_handlers
 from .routes.public import admins_router, apis_router, users_router
 from .settings.backends import admins_db, apis_db, state_tokens_db, users_db
+from .settings.idp import google_auth_client
 
 all_exception_handlers = {}
 all_exception_handlers.update(passwd_exception_handlers)
@@ -16,6 +17,12 @@ async def startup():
     await apis_db.connect()
     await admins_db.connect()
     await state_tokens_db.connect()
+    if google_auth_client.jwks_uri is None:
+        raise RuntimeError("Google missing JWKS uri: needed for GoogleAuthClient")
+    try:
+        await google_auth_client.update_jwks_keys()
+    except Exception:
+        raise RuntimeError("Could not download JWKS keys from Google")
 
 
 @app.on_event("shutdown")

@@ -112,12 +112,6 @@ class GoogleAuthClient(OAuth2AuthClient):
         return urlencode(self.get_query_params(code, token))
 
     async def update_jwks_keys(self):
-        # Sanity check
-        if self.jwks_uri is None:
-            err_msg = "Google JWK keys: missing 'jwks_uri' key in GoogleAuthClient"
-            logger.critical(err_msg)
-            raise Oauth2AuthError(err_msg)
-
         keys = self.jwks_keys.get("keys", None)
         expiration_datetime = self.jwks_keys.get("expiration_datetime", None)
         if keys is not None and expiration_datetime is not None:
@@ -127,33 +121,30 @@ class GoogleAuthClient(OAuth2AuthClient):
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(str(self.jwks_uri))
-                if response.status_code == httpx.codes.OK:
-                    try:
-                        jwks_keys = response.json()
-                        expiration_datetime = datetime.utcnow() + timedelta(hours=1)
-                        self.jwks_keys.update({"expiration_datetime": expiration_datetime})
-                    except Exception as exc:
-                        err_msg = f"Google JWS keys decode: {exc}"
-                        logger.exception(err_msg)
-                        raise Oauth2AuthError(err_msg)
-                    # Update stale JWS keys with freshly downloaded ones
-                    self.jwks_keys.update(jwks_keys)
-                elif self.jwks_keys.get("keys", None):
-                    err_msg = f"Google JWS keys instantiation error: {self.jwks_uri=} {response.status_code=}"
-                    logger.critical(err_msg)
-                    raise Oauth2AuthError(err_msg)
-                else:
-                    logger.warning(
-                        f"Google JWS keys are stale: Could not reach {self.jwks_uri=} {response.status_code=}"
-                    )
-            except httpx.RequestError as exc:
+                response.raise_for_status()
+            except (httpx.HTTPStatusError, httpx.RequestError) as exc:
                 err_msg = f"Google JWS keys endpoint: {exc=} {exc.request.url}"
                 logger.error(err_msg)
                 raise Oauth2AuthError(err_msg) from exc
             except Exception as exc:
-                err_msg = f"Unknown: Google JWS keys endpoint: {exc=} {exc.request.url}"
+                err_msg = f"Unexpected: Google JWS keys endpoint: {exc=} {exc.request.url}"
                 logger.exception(err_msg)
                 raise Oauth2AuthError(err_msg) from exc
+
+            try:
+                jwks_keys = response.json()
+            except Exception as exc:
+                err_msg = f"Google JWS keys decode: {exc}"
+                logger.exception(err_msg)
+                raise Oauth2AuthError(err_msg)
+
+            # Update stale JWS keys with freshly downloaded ones
+            self.jwks_keys.update(jwks_keys)
+            self.jwks_keys.update(
+                {"expiration_datetime": datetime.utcnow() + timedelta(hours=1)},
+            )
+
+            logger.info("Fetched Google JWKS keys")
 
     async def validate_id_token(self, jwt_token: str, access_token: str) -> dict[str, Any]:
         await self.update_jwks_keys()
@@ -218,7 +209,7 @@ class GoogleAuthClient(OAuth2AuthClient):
                 params = self.get_query_params(code, token)
                 response = await client.post(str(self.token_url), params=params)
                 response.raise_for_status()
-            except httpx.RequestError as exc:
+            except (httpx.HTTPStatusError, httpx.RequestError) as exc:
                 err_msg = f"Google auth endpoint: {exc}"
                 logger.error(err_msg)
                 raise Oauth2AuthError(err_msg) from exc
