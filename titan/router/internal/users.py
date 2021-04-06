@@ -4,7 +4,7 @@ from ...logger import logger
 from ...settings.backends import users_db_internal
 from ...tokens import DecodedToken
 from ...utils import StrictBaseModel
-from ..depends import get_decoded_token, store_decoded_token, validate_ttype_xaccess, empty_body
+from ..depends import empty_body, get_decoded_token, store_decoded_token, validate_ttype_xaccess
 
 users_router_internal = APIRouter(
     prefix="/opt/user",

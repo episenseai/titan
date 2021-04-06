@@ -13,7 +13,7 @@ from ...settings.idp import github_auth_client, github_login_client, google_auth
 from ...tokens import TokenClaims
 from ...utils import ImmutBaseModel
 
-users_router = APIRouter()
+users_router = APIRouter(tags=["user/token"])
 
 
 @users_router.get("/login")

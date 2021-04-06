@@ -5,9 +5,9 @@ from databases import Database
 from passlib.context import CryptContext
 from pydantic import UUID4
 
+from ...logger import logger
 from ..base import PgSQLBase
 from ..schema.admins import admins_schema
-from ...logger import logger
 
 
 class AdminsTableInternal(PgSQLBase):

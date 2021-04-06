@@ -9,7 +9,7 @@ from ..depends import get_decoded_token, store_decoded_token, validate_ttype_acc
 
 admins_router = APIRouter(
     prefix="/x",
-    tags=["x"],
+    tags=["admin/token"],
     dependencies=[
         Depends(store_decoded_token),
         # Can only get xaccess_token if one is holding an access_token

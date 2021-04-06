@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 from jose import jwt
 from jose.exceptions import JOSEError, JWTError
-from pydantic import UUID4, validator, ValidationError
+from pydantic import UUID4, ValidationError, validator
 
 from .logger import logger
 from .settings.jwt import get_jwt_config
