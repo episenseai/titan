@@ -133,7 +133,6 @@ class DecodedToken(ImmutBaseModel):
     sub: UUID4
     scope: Union[str, list[str]]
     ttype: TokenType
-    jti: str
 
 
 async def validate_token(raw_token: str) -> Optional[DecodedToken]:
@@ -148,6 +147,7 @@ async def validate_token(raw_token: str) -> Optional[DecodedToken]:
                 "require_exp": True,
                 "require_sub": True,
                 "require_iss": True,
+                "require_jti": False,
             },
             issuer=TOKEN_ISS,
         )
