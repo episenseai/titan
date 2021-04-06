@@ -17,12 +17,15 @@ async def startup():
     await apis_db.connect()
     await admins_db.connect()
     await state_tokens_db.connect()
+    # run this in production to aovid fetching keys over and over again
+    """
     if google_auth_client.jwks_uri is None:
         raise RuntimeError("Google missing JWKS uri: needed for GoogleAuthClient")
     try:
         await google_auth_client.update_jwks_keys()
     except Exception:
         raise RuntimeError("Could not download JWKS keys from Google")
+    """
 
 
 @app.on_event("shutdown")
