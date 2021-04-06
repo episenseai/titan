@@ -68,16 +68,16 @@ class AdminsTableInternal(PgSQLBase):
             return None
         return True
 
-    async def freeze_adminid(self, adminid: UUID4):
+    async def freeze_adminid(self, adminid: UUID4) -> Optional[bool]:
         return await self.toogle(frozen=True, adminid=adminid)
 
-    async def unfreeze_adminid(self, adminid: UUID4):
+    async def unfreeze_adminid(self, adminid: UUID4) -> Optional[bool]:
         return await self.toogle(frozen=False, adminid=adminid)
 
-    async def freeze_username(self, username: str):
+    async def freeze_username(self, username: str) -> Optional[bool]:
         return await self.toogle(frozen=True, username=username)
 
-    async def unfreeze_username(self, username: str):
+    async def unfreeze_username(self, username: str) -> Optional[bool]:
         return await self.toogle(frozen=False, username=username)
 
     async def toogle(

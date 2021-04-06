@@ -17,12 +17,18 @@ AVAILABLE_COMMANDS=(
 	'enable-api'
 	'newkey-api'
 	'admin-login'
+	'freeze-user-email'
+	'unfreeze-user-email'
+	'freeze-user'
+	'unfreeze-user'
+	'freeze-admin-username'
+	'unfreeze-admin-username'
+	'freeze-admin'
+	'unfreeze-admin'
+	'freeze-api'
+	'unfreeze-api'
+	'list-apis'
 )
-
-if [[ -z $TOKEN ]]; then
-	echo "TOKEN='' missing"
-	exit 1
-fi
 
 check_apislug() {
 	if [[ -z $APISLUG ]]; then
@@ -34,6 +40,20 @@ check_apislug() {
 check_data() {
 	if [[ -z $DATA ]]; then
 		echo "No JSON data provided to send"
+		exit 1
+	fi
+}
+
+check_token() {
+	if [[ -z $TOKEN ]]; then
+		echo "XTOKEN='' missing"
+		exit 1
+	fi
+}
+
+check_xtoken() {
+	if [[ -z $XTOKEN ]]; then
+		echo "XTOKEN='' missing"
 		exit 1
 	fi
 }
@@ -84,6 +104,50 @@ elif [[ $COMMAND == "newkey-api" ]]; then
 	URL="$BASEURL/api/key/$APISLUG"
 elif [[ $COMMAND == "admin-login" ]]; then
 	URL="$BASEURL/x/token"
+elif [[ $COMMAND == "freeze-user-email" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/user/freeze/email"
+elif [[ $COMMAND == "unfreeze-user-email" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/user/unfreeze/email"
+elif [[ $COMMAND == "freeze-user" ]]; then
+	URL="$BASEURL/opt/user/freeze/user"
+elif [[ $COMMAND == "unfreeze-user" ]]; then
+	URL="$BASEURL/opt/user/unfreeze/user"
+elif [[ $COMMAND == "freeze-admin-username" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/x/freeze/username"
+elif [[ $COMMAND == "unfreeze-admin-username" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/x/unfreeze/username"
+elif [[ $COMMAND == "freeze-admin" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/x/freeze/admin"
+elif [[ $COMMAND == "unfreeze-admin" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/x/unfreeze/admin"
+elif [[ $COMMAND == "create-admin" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/x"
+elif [[ $COMMAND == "freeze-api" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/api/freeze"
+elif [[ $COMMAND == "unfreeze-api" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/api/unfreeze"
+elif [[ $COMMAND == "list-apis-admin" ]]; then
+	check_data
+	print_data
+	URL="$BASEURL/opt/api"
 else
 	echo "COMMAND = \"$COMMAND\" not found" 1>&2
 	help_exit
@@ -94,20 +158,40 @@ if [[ $COMMAND == "create-api" ]] ||
 	[[ $COMMAND == "disable-api" ]] ||
 	[[ $COMMAND == "enable-api" ]] ||
 	[[ $COMMAND == "newkey-api" ]]; then
+	check_token
 	debug_curl
 	curl $* -d "$DATA" -L -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -X POST "$URL" | jq
 
+elif [[ $COMMAND == "freeze-user-email" ]] ||
+	[[ $COMMAND == "unfreeze-user-email" ]] ||
+	[[ $COMMAND == "freeze-user" ]] ||
+	[[ $COMMAND == "unfreeze-user" ]] ||
+	[[ $COMMAND == "freeze-admin-username" ]] ||
+	[[ $COMMAND == "unfreeze-admin-username" ]] ||
+	[[ $COMMAND == "freeze-admin" ]] ||
+	[[ $COMMAND == "create-admin" ]] ||
+	[[ $COMMAND == "unfreeze-admin" ]] ||
+	[[ $COMMAND == "freeze-api" ]] ||
+	[[ $COMMAND == "unfreeze-api" ]] ||
+	[[ $COMMAND == "list-apis-admin" ]]; then
+	check_xtoken
+	debug_curl
+	curl $* -d "$DATA" -L -H "Authorization: Bearer $XTOKEN" -H 'Content-Type: application/json' -X POST "$URL" | jq
+
 elif [[ $COMMAND == "admin-login" ]]; then
+	check_xtoken
 	debug_curl
 	# ./curly -F 'username=username' -F 'password=something'
 	curl $* -L -H "Authorization: Bearer $TOKEN" -X POST "$URL" | jq
 
 elif [[ $COMMAND == "delete-api" ]]; then
+	check_token
 	debug_curl
 	curl $* -L -H "Authorization: Bearer $TOKEN" -X DELETE "$URL" | jq
 
 elif [[ $COMMAND == "get-api" ]] ||
 	[[ $COMMAND == "list-apis" ]]; then
+	check_token
 	debug_curl
 	curl $* -L -H "Authorization: Bearer $TOKEN" "$URL" | jq
 else
