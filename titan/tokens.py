@@ -5,21 +5,21 @@ from typing import Optional, Union
 
 from jose import jwt
 from jose.exceptions import JOSEError, JWTError
-from pydantic import UUID4, validator
+from pydantic import UUID4, validator, ValidationError
 
 from .logger import logger
 from .settings.jwt import get_jwt_config
 from .utils import ImmutBaseModel
 
 # token issuer
-TOKEN_ISS = "https://episense.ai"
+TOKEN_ISS = "episense.ai"
 
 
 @unique
 class TokenType(str, Enum):
-    ACCESS_TOKEN = "access_token"
-    REFRESH_TOKEN = "refresh_token"
-    XACCESS_TOKEN = "xaccess_token"
+    ACCESS_TOKEN = "axx"
+    REFRESH_TOKEN = "rxx"
+    XACCESS_TOKEN = "xxx"
 
 
 class EncodedToken(ImmutBaseModel):
@@ -61,10 +61,6 @@ class TokenClaims(ImmutBaseModel):
             return " ".join(values)
         return values
 
-    @staticmethod
-    def gen_jti() -> str:
-        return uuid.uuid4().hex
-
     def issue(self, ttype: TokenType) -> EncodedToken:
         config = get_jwt_config()
 
@@ -92,7 +88,7 @@ class TokenClaims(ImmutBaseModel):
         claims_dict.update(ttype=ttype.value)
 
         # reserved claims
-        claims_dict.update(iss=TOKEN_ISS, exp=exp, jti=self.gen_jti())
+        claims_dict.update(iss=TOKEN_ISS, exp=exp)
 
         token = jwt.encode(
             claims_dict,
@@ -151,7 +147,6 @@ async def validate_token(raw_token: str) -> Optional[DecodedToken]:
             options={
                 "require_exp": True,
                 "require_sub": True,
-                "require_jti": True,
                 "require_iss": True,
             },
             issuer=TOKEN_ISS,
@@ -160,6 +155,9 @@ async def validate_token(raw_token: str) -> Optional[DecodedToken]:
         return DecodedToken(**decoded_token)
     except (JWTError, JOSEError) as exc:
         logger.error(f"JWT decode error: {exc}")
+        return None
+    except ValidationError as exc:
+        logger.error(f"JWT token decode error: {exc}")
         return None
     except Exception:
         logger.exception("Unknown JWT decode error")
