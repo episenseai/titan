@@ -74,14 +74,8 @@ async def create_admin(
     admins_table: str = ADMINS_TABLE,
 ):
     pg = AdminsTableInternal(database_url, admins_table)
-    value = {
-        "email": email,
-        "username": username,
-        "password": password,
-        "scope": scope,
-    }
     async with pg:
-        val = await pg.create(value=value)
+        val = await pg.create(email=email, username=username, password=password, scope=scope)
         debug(val)
 
 

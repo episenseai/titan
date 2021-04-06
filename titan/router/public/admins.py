@@ -68,7 +68,7 @@ async def get_xaccess_token(
         logger.info(f"Admin frozen: can't issue admin token for (user={user.userid}, admin={admin.adminid})")
         raise frozen_error
 
-    is_verified = await admins_db.verify_password(admin=admin, password=form_data.password)
+    is_verified = await admins_db.verify_password(password=form_data.password, password_hash=admin.password)
 
     if not is_verified:
         logger.info(

@@ -1,15 +1,25 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 from databases import Database
+from passlib.context import CryptContext
 
 from ...exceptions.exc import DatabaseUserFetchError
+from ...logger import logger
 from ..base import PgSQLBase
 from ..schema.admins import AdminInDB, admins_schema
 
 
 class AdminsTable(PgSQLBase):
-    def __init__(self, database_url: str, table_name: str):
-        super().__init__(Database(database_url), admins_schema(admins_table=table_name))
+    # 'bcrypt' truncates ones larger than 72 bytes. truncate_error=True will
+    # raise a PasswordTruncateError.
+    pwd_context: ClassVar[CryptContext] = CryptContext(
+        schemes=["bcrypt"],
+        deprecated="auto",
+        truncate_error=True,
+    )
+
+    def __init__(self, database_url: str, admins_table: str):
+        super().__init__(Database(database_url), admins_schema(admins_table=admins_table))
 
     async def get_admin(self, email: str, username: str) -> Optional[AdminInDB]:
         query = (
@@ -32,8 +42,9 @@ class AdminsTable(PgSQLBase):
                 raise DatabaseUserFetchError from exc
         return None
 
-    @staticmethod
-    async def verify_password(admin: AdminInDB, password: str) -> bool:
-        if admin.password == password:
-            return True
-        return False
+    async def verify_password(self, password: str, password_hash: str) -> bool:
+        try:
+            return self.pwd_context.verify(password, password_hash)
+        except Exception as exc:
+            logger.error(f"Unexpected: Could not verify admin password: {exc}")
+            return False

@@ -1,14 +1,24 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 from asyncpg.exceptions import UniqueViolationError
 from databases import Database
+from passlib.context import CryptContext
 from pydantic import UUID4
 
 from ..base import PgSQLBase
 from ..schema.admins import admins_schema
+from ...logger import logger
 
 
 class AdminsTableInternal(PgSQLBase):
+    # 'bcrypt' truncates ones larger than 72 bytes. truncate_error=True will
+    # raise a PasswordTruncateError.
+    pwd_context: ClassVar[CryptContext] = CryptContext(
+        schemes=["bcrypt"],
+        deprecated="auto",
+        truncate_error=True,
+    )
+
     def __init__(
         self,
         database_url: str,
@@ -19,7 +29,28 @@ class AdminsTableInternal(PgSQLBase):
             table=admins_schema(admins_table=admins_table),
         )
 
-    async def create(self, value: dict) -> Optional[bool]:
+    async def hash_password(self, password: str) -> Optional[str]:
+        """
+        Hash password using bcrypt
+        """
+        try:
+            return self.pwd_context.hash(password)
+        except Exception as exc:
+            logger.error(f"Unexpected: Could not hash admin password: {exc}")
+            return None
+
+    async def verify_password(self, password: str, password_hash: str) -> bool:
+        try:
+            return self.pwd_context.verify(password, password_hash)
+        except Exception as exc:
+            logger.error(f"Unexpected: Could not verify admin password: {exc}")
+            return False
+
+    async def create(self, email: str, username: str, password: str, scope: str) -> Optional[bool]:
+        password_hash = await self.hash_password(password)
+        if password_hash is None:
+            return None
+        value = {"email": email, "username": username, "password": password_hash, "scope": scope}
         query = (
             self.table.insert()
             .values(value)
