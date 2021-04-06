@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from .exceptions.passwd import passwd_exception_handlers
-from .routes.public import admins_router, apis_router, users_router
+from .router.public import admins_router, apis_router, users_router
 from .settings.backends import admins_db, apis_db, state_tokens_db, users_db
 from .settings.idp import google_auth_client
 
