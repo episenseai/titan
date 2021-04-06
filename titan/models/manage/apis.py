@@ -15,5 +15,4 @@ class APIsTableManage(PgSQLManageTable):
         super().__init__(
             database=Database(database_url),
             table=apis_schema(apis_table=apis_table, users_table=users_table),
-            uuid_ext=uuid_ext,
         )

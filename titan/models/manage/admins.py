@@ -14,5 +14,4 @@ class AdminsTableManage(PgSQLManageTable):
         super().__init__(
             database=Database(database_url),
             table=admins_schema(admins_table=admins_table),
-            uuid_ext=uuid_ext,
         )
