@@ -29,7 +29,7 @@ class StateToken(ImmutBaseModel):
     idp: IdentityProvider
 
     @staticmethod
-    def gen_state(num_bytes: int = 48) -> str:
+    def gen_state(num_bytes: int = 64) -> str:
         if num_bytes < 18:
             raise ValueError(f"{num_bytes=} in random state token is too small")
         alphabet = string.ascii_letters + string.digits
