@@ -29,10 +29,10 @@ class APIsTable(PgSQLBase):
         truncate_error=True,
     )
 
-    def __init__(self, database_url: str, apis_table: str, users_table: str):
+    def __init__(self, database: Database, apis_table: str, users_table: str):
         super().__init__(
-            Database(database_url),
-            apis_schema(apis_table=apis_table, users_table=users_table),
+            database=database,
+            table=apis_schema(apis_table=apis_table, users_table=users_table),
         )
 
     def gen_apislug(self) -> str:

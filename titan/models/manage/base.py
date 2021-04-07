@@ -13,7 +13,7 @@ class PgSQLManageTable(PgSQLBase):
     def __init__(self, database: Database, table: Table):
         super().__init__(database, table)
 
-    def str_schema(self) -> str:
+    async def str_schema(self) -> str:
         """
         Compiled `CREATE TABLE ...` statement
         """

@@ -21,11 +21,11 @@ class AdminsTableInternal(PgSQLBase):
 
     def __init__(
         self,
-        database_url: str,
+        database: Database,
         admins_table: str,
     ) -> None:
         super().__init__(
-            database=Database(database_url),
+            database=database,
             table=admins_schema(admins_table=admins_table),
         )
 

@@ -18,8 +18,8 @@ class AdminsTable(PgSQLBase):
         truncate_error=True,
     )
 
-    def __init__(self, database_url: str, admins_table: str):
-        super().__init__(Database(database_url), admins_schema(admins_table=admins_table))
+    def __init__(self, database: Database, admins_table: str):
+        super().__init__(database=database, table=admins_schema(admins_table=admins_table))
 
     async def get_admin(self, email: str, username: str) -> Optional[AdminInDB]:
         query = (

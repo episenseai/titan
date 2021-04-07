@@ -10,11 +10,11 @@ from ..schema.users import users_schema
 class UsersTableInternal(PgSQLBase):
     def __init__(
         self,
-        database_url: str,
+        database: Database,
         users_table: str,
     ) -> None:
         super().__init__(
-            database=Database(database_url),
+            database=database,
             table=users_schema(users_table=users_table),
         )
 

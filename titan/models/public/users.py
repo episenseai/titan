@@ -8,8 +8,8 @@ from ..schema.users import NewUser, UserInDB, users_schema
 
 
 class UsersTable(PgSQLBase):
-    def __init__(self, database_url: str, users_table: str):
-        super().__init__(Database(database_url), users_schema(users_table=users_table))
+    def __init__(self, database: Database, users_table: str):
+        super().__init__(database=database, table=users_schema(users_table=users_table))
 
     async def get(self, email: Optional[str] = None, userid: Optional[UUID4] = None) -> Optional[UserInDB]:
         """

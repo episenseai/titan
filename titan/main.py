@@ -3,15 +3,7 @@ from fastapi import FastAPI
 from .exceptions.passwd import passwd_exception_handlers
 from .router.internal import admins_router_internal, apis_router_internal, users_router_internal
 from .router.public import admins_router, apis_router, users_router
-from .settings.backends import (
-    admins_db,
-    admins_db_internal,
-    apis_db,
-    apis_db_internal,
-    state_tokens_db,
-    users_db,
-    users_db_internal,
-)
+from .settings.backends import TEST_DATABSE, state_tokens_db
 from .settings.idp import google_auth_client
 
 all_exception_handlers = {}
@@ -22,12 +14,7 @@ app = FastAPI(exception_handlers=all_exception_handlers)  # noqa
 
 @app.on_event("startup")
 async def startup():
-    await users_db.connect()
-    await apis_db.connect()
-    await admins_db.connect()
-    await users_db_internal.connect()
-    await apis_db_internal.connect()
-    await admins_db_internal.connect()
+    await TEST_DATABSE.connect()
     await state_tokens_db.connect()
     # run this in production to aovid fetching keys over and over again
     """
@@ -42,12 +29,7 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
-    await users_db.disconnect()
-    await apis_db.disconnect()
-    await admins_db.disconnect()
-    await users_db_internal.disconnect()
-    await apis_db_internal.disconnect()
-    await admins_db_internal.disconnect()
+    await TEST_DATABSE.disconnect()
     await state_tokens_db.disconnect()
 
 
