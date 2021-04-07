@@ -4,6 +4,7 @@ from ..auth.state import StateTokensDB
 from ..models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
 from ..models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
 from ..models.public import AdminsTable, APIsTable, UsersTable
+from .idp import google_auth_client
 from .oauth2 import TEST_ADMINS_TABLE, TEST_APIS_TABLE, TEST_PGSQL_URL, TEST_USERS_TABLE
 
 TEST_DATABSE = Database(TEST_PGSQL_URL)
@@ -29,6 +30,18 @@ async def check_table_existence():
         exists = await db.exists_table_in_db()
         if not exists:
             raise RuntimeError(f"Table missing: (database={db.database.url}, table={db.table.name})")
+
+
+async def initialize_JWKS_keys():
+    """
+    Run this in production to aovid fetching keys over and over again
+    """
+    if google_auth_client.jwks_uri is None:
+        raise RuntimeError("Google missing JWKS uri: needed for GoogleAuthClient")
+    try:
+        await google_auth_client.update_jwks_keys()
+    except Exception:
+        raise RuntimeError("Could not download JWKS keys from Google")
 
 
 state_tokens_db = StateTokensDB()
