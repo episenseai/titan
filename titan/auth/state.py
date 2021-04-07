@@ -1,13 +1,13 @@
 import secrets
 import string
-from datetime import datetime
+from datetime import timedelta
 from typing import Optional, Union
 
-from pydantic import StrictStr
+import redis
 
-from ..logger import logger
 from ..utils import ImmutBaseModel
 from .idp import IdentityProvider
+from ..logger import logger
 
 
 class StateToken(ImmutBaseModel):
@@ -15,19 +15,18 @@ class StateToken(ImmutBaseModel):
     # equest forgery(CSRF) attacks. It is introduced from OAuth 2.0
     # protocol
     # https://tools.ietf.org/html/rfc6749#section-10.12
-    state: StrictStr
+    state: str
     # `nonce` binds the token with the client. So the client can validate
     # the token it received against the initial authorization request,
     # thus ensuring the validity of the token. Prevents replay attacks.
     # https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowSteps
-    nonce: Optional[StrictStr] = None
+    nonce: str = ""
     # `uistate` represents the state of UI, like curren URL before
     # starting the login flow. This can be recovered, once the
     # Login is successfull, by sending the state back to the
     # frontend.
-    ustate: Optional[str] = None
+    ustate: str = ""
     idp: IdentityProvider
-    created_at: datetime
 
     @staticmethod
     def gen_state(num_bytes: int = 48) -> str:
@@ -50,33 +49,35 @@ class StateToken(ImmutBaseModel):
         if with_nonce:
             nonce = cls.gen_state()
         else:
-            nonce = None
+            nonce = ""
         token = StateToken(
             state=state,
             nonce=nonce,
             uistate=ustate,
             idp=idp.value,
-            created_at=datetime.utcnow(),
         )
         return token
 
 
 class StateTokensDB:
-    def __init__(self):
-        self.db = {}
-
-    async def connect(self):
-        logger.info("Connected to state_tokens_db")
-
-    async def disconnect(self):
-        logger.info("Disconnected from state_tokens_db")
+    def __init__(self, redis_host: str, redis_port: str, redis_db: int):
+        self.redis = redis.Redis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
+        self.expire_delta = timedelta(minutes=8)
 
     def store(self, token: StateToken):
-        self.db[token.state] = token
+        self.redis.set(
+            name=token.state,
+            value=token.json(),
+            ex=self.expire_delta,
+        )
 
     def pop_and_verify(self, state: str) -> Union[StateToken, bool]:
-        token = self.db.pop(state, None)
-        if token:
-            if token.created_at < datetime.utcnow():
-                return token
-        return False
+        result = self.redis.execute_command("GETDEL", state)
+        if not result:
+            return False
+        try:
+            token = StateToken.parse_raw(result)
+            return token
+        except Exception as exc:
+            logger.exception(f"Error decoding StateToken from redis: {exc}")
+            return False

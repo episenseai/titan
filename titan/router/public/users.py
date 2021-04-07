@@ -19,7 +19,7 @@ users_router = APIRouter(tags=["user/token"])
 @users_router.get("/login")
 async def auth_redirect_url(
     p: IdentityProvider = Query(...),
-    ustate: Optional[str] = Query(None),
+    ustate: str = Query(""),
 ):
     if p == IdentityProvider.github:
         login_client = github_login_client
@@ -163,5 +163,5 @@ async def get_access_token(
         ustate=state_token.ustate,
         **issued_token.dict(),
     )
-    logger.info(f"Issued access_token: (user={claims.sub}, idp={user.idp})")
+    logger.info(f"Issued access_token: (user={claims.sub}, idp={state_token.idp})")
     return token

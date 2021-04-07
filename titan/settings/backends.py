@@ -5,7 +5,15 @@ from ..models.internal import AdminsTableInternal, APIsTableInternal, UsersTable
 from ..models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
 from ..models.public import AdminsTable, APIsTable, UsersTable
 from .idp import google_auth_client
-from .oauth2 import TEST_ADMINS_TABLE, TEST_APIS_TABLE, TEST_PGSQL_URL, TEST_USERS_TABLE
+from .oauth2 import (
+    TEST_ADMINS_TABLE,
+    TEST_APIS_TABLE,
+    TEST_PGSQL_URL,
+    TEST_REDIS_DB_NUMBER,
+    TEST_REDIS_HOST,
+    TEST_REDIS_PORT,
+    TEST_USERS_TABLE,
+)
 
 TEST_DATABSE = Database(TEST_PGSQL_URL)
 
@@ -44,4 +52,8 @@ async def initialize_JWKS_keys():
         raise RuntimeError("Could not download JWKS keys from Google")
 
 
-state_tokens_db = StateTokensDB()
+state_tokens_db = StateTokensDB(
+    redis_host=TEST_REDIS_HOST,
+    redis_port=TEST_REDIS_PORT,
+    redis_db=TEST_REDIS_DB_NUMBER,
+)

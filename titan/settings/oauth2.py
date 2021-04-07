@@ -48,3 +48,7 @@ TEST_PGSQL_URL = "postgresql://localhost/testdb"
 TEST_USERS_TABLE = "testusers"
 TEST_ADMINS_TABLE = "testadmins"
 TEST_APIS_TABLE = "testapis"
+
+TEST_REDIS_HOST = "localhost"
+TEST_REDIS_PORT = 6379
+TEST_REDIS_DB_NUMBER = 8
