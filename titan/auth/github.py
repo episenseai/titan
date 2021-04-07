@@ -177,7 +177,7 @@ class GithubAuthClient(OAuth2AuthClient):
                 user_dict: dict = user_response.json()
             except Exception as exc:
                 err_msg = f"Github user info JSON decode: {user_response=} {exc}"
-                logger.log(err_msg)
+                logger.error(err_msg)
                 raise Oauth2AuthError(err_msg) from exc
 
             # Call the emails endpoint to get the primary email address.

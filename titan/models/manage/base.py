@@ -13,6 +13,9 @@ class PgSQLManageTable(PgSQLBase):
     def __init__(self, database: Database, table: Table):
         super().__init__(database, table)
 
+    async def insert(self, values: Optional[dict] = None):
+        await self.database.execute(query=self.table.insert(), values=values)
+
     async def str_schema(self) -> str:
         """
         Compiled `CREATE TABLE ...` statement
@@ -26,7 +29,7 @@ class PgSQLManageTable(PgSQLBase):
 
         if result is None or not isinstance(result.get("exists"), bool):
             raise RuntimeError(
-                'Could not check whether "uuid-ossp" extension exists:\n'
+                'Could not check whether "uuid-ossp" extension exists: '
                 + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
             )
         return result.get("exists")
@@ -45,7 +48,7 @@ class PgSQLManageTable(PgSQLBase):
 
         if result is None or not isinstance(result.get("exists"), bool):
             raise RuntimeError(
-                "Could not check whether 'trigger_set_timestamp' function exists:\n"
+                "Could not check whether 'trigger_set_timestamp' function exists: "
                 + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
             )
         return result.get("exists")
@@ -72,7 +75,7 @@ class PgSQLManageTable(PgSQLBase):
 
         if result is None or not isinstance(result.get("exists"), bool):
             raise RuntimeError(
-                "Could not check the existence of table:\n"
+                "Could not check the existence of table: "
                 + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
             )
         return result.get("exists")
@@ -82,8 +85,36 @@ class PgSQLManageTable(PgSQLBase):
         print(f"Creating table: (database={self.database.url}, table={self.table.name})")
         await self.database.fetch_one(query=query)
 
-    async def insert(self, values: Optional[dict] = None):
-        await self.database.execute(query=self.table.insert(), values=values)
+    async def exists_column_updated_at(self) -> bool:
+        query = f"""
+        SELECT EXISTS(SELECT  column_name
+                FROM  information_schema.columns
+               WHERE  table_schema = 'public'
+                 AND  table_name = '{self.table.name}'
+                 AND  column_name = 'updated_at');
+        """
+
+        result = await self.database.fetch_one(query=query)
+
+        if result is None or not isinstance(result.get("exists"), bool):
+            raise RuntimeError(
+                "Could not check the existence of column='updated_at': "
+                + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
+            )
+        return result.get("exists")
+
+    async def create_trigger_updated_at(self):
+        query = f"""
+        CREATE TRIGGER set_timestamp
+        BEFORE UPDATE ON {self.table.name}
+        FOR EACH ROW
+        EXECUTE PROCEDURE trigger_set_timestamp();
+        """
+        print(
+            "Creating trigger 'trigger_set_timestamp()' for column='updated_at': "
+            f"(database={self.database.url}, table={self.table.name})"
+        )
+        return await self.database.fetch_one(query=query)
 
     async def create_table(self):
         exists = await self.exists_trigger_set_timestamp()
@@ -92,7 +123,7 @@ class PgSQLManageTable(PgSQLBase):
             exists = await self.exists_trigger_set_timestamp()
             if not exists:
                 RuntimeError(
-                    "Error creating 'trigger_set_timestamp' function:\n"
+                    "Error creating 'trigger_set_timestamp' function: "
                     + f"(database={self.database.url}, table={self.table.name})",
                 )
 
@@ -102,7 +133,7 @@ class PgSQLManageTable(PgSQLBase):
             exists = await self.exists_uuid_ossp_extension()
             if not exists:
                 RuntimeError(
-                    'Error creating "uuid-ossp" extension:\n'
+                    'Error creating "uuid-ossp" extension: '
                     + f"(database={self.database.url}, table={self.table.name})",
                 )
 
@@ -110,7 +141,7 @@ class PgSQLManageTable(PgSQLBase):
             exists = await self.exists_table_in_db()
             if not exists:
                 err_msg = (
-                    "Error creating table in database:\n" + f"(database={self.database.url}, table={self.table.name})",
+                    "Error creating table in database: " + f"(database={self.database.url}, table={self.table.name})",
                 )
                 await self.create_table_in_db()
                 exists = await self.exists_table_in_db()
@@ -118,6 +149,21 @@ class PgSQLManageTable(PgSQLBase):
                     RuntimeError(err_msg)
             else:
                 print(f"Table already exists: (database={self.database.url}, table={self.table.name})")
-
+                return
         except Exception as exc:
             RuntimeError(f"{err_msg}\n{exc}")
+
+        exists = await self.exists_column_updated_at()
+        if exists:
+            try:
+                await self.create_trigger_updated_at()
+            except Exception as exc:
+                RuntimeError(
+                    "Error creating 'trigger_set_timestamp' function: "
+                    + f"(database={self.database.url}, table={self.table.name})\n{exc}"
+                )
+        else:
+            print(
+                "Skipping creating 'trigger_set_timestamp()' for column='updated_at': "
+                f"(database={self.database.url}, table={self.table.name})"
+            )

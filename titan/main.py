@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from .exceptions.passwd import passwd_exception_handlers
 from .router.internal import admins_router_internal, apis_router_internal, users_router_internal
 from .router.public import admins_router, apis_router, users_router
-from .settings.backends import TEST_DATABSE, state_tokens_db
+from .settings.backends import TEST_DATABSE, check_table_existence, state_tokens_db
 from .settings.idp import google_auth_client
 
 all_exception_handlers = {}
@@ -15,6 +15,7 @@ app = FastAPI(exception_handlers=all_exception_handlers)  # noqa
 @app.on_event("startup")
 async def startup():
     await TEST_DATABSE.connect()
+    await check_table_existence()
     await state_tokens_db.connect()
     # run this in production to aovid fetching keys over and over again
     """

@@ -179,7 +179,7 @@ elif [[ $COMMAND == "freeze-user-email" ]] ||
 	curl $* -d "$DATA" -L -H "Authorization: Bearer $XTOKEN" -H 'Content-Type: application/json' -X POST "$URL" | jq
 
 elif [[ $COMMAND == "admin-login" ]]; then
-	check_xtoken
+	check_token
 	debug_curl
 	# ./curly -F 'username=username' -F 'password=something'
 	curl $* -L -H "Authorization: Bearer $TOKEN" -X POST "$URL" | jq

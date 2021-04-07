@@ -127,7 +127,7 @@ async def get_access_token(
         if new_user is None:
             logger.error(f"Create new user: (idp={state_token.idp}, email={auth_user.email})")
             raise authentication_error
-        logger.log(f"Created new user: (idp={state_token.idp}, user={new_user.userid}, scope={SIGNUP_SCOPE})")
+        logger.info(f"Created new user: (idp={state_token.idp}, user={new_user.userid}, scope={SIGNUP_SCOPE})")
         user = new_user
     else:
         if user.idp != state_token.idp:

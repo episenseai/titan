@@ -71,7 +71,6 @@ def users_schema(users_table: str) -> Table:
             sqlalchemy.DateTime(timezone=True),
             nullable=False,
             server_default=sqlalchemy.sql.functions.current_timestamp(),
-            # NOTE: this does not work in postgres, have to use trigger
             server_onupdate=sqlalchemy.sql.functions.current_timestamp(),
         ),
         # Identity Provider.
