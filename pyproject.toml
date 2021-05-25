@@ -40,3 +40,19 @@ exclude = "(.eggs|.git|.hg|.mypy_cache|.pytest_cache|.ipynb_checkpoints|.nox|.to
 profile = "black"
 src_paths = ["titan", "tests"]
 line_length = 120
+
+[tool.pyright]
+include = ["titan"]
+extraPaths = ["titan"]
+exclude = [".venv", "**/__pycache__", "**/node_modules", "target"]
+#venvPath = ".venv"
+
+reportTypeshedErrors = false
+reportUnboundVariable = "none"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportGeneralTypeIssues = "none"
+
+executionEnvironments = [
+  { root = "./", extraPaths = ["titan"], exclude = [".venv", "**/__pycache__", "**/node_modules", "target"] }
+]
