@@ -11,7 +11,9 @@ class UsersTable(PgSQLBase):
     def __init__(self, database: Database, users_table: str):
         super().__init__(database=database, table=users_schema(users_table=users_table))
 
-    async def get(self, email: Optional[str] = None, userid: Optional[UUID4] = None) -> Optional[UserInDB]:
+    async def get(
+        self, email: Optional[str] = None, userid: Optional[UUID4] = None
+    ) -> Optional[UserInDB]:
         """
         User returned might be `frozen`. One should take this into account at the call site.
         """

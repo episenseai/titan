@@ -75,7 +75,9 @@ async def create(
 ):
     new_api = await apis_db.create(userid=token.sub, description=data.description)
     if new_api is None:
-        logger.error(f"Could not create a new api for user={token.sub} with description='{data.description}'")
+        logger.error(
+            f"Could not create a new api for user={token.sub} with description='{data.description}'"
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Unprocessable Entity.",
@@ -110,7 +112,9 @@ async def delete(
     if result == APIState.DELETED:
         logger.info(f"Deleted: {apislug=} for user={token.sub}")
         return {"deleted": True}
-    logger.critical(f"Unreachable: APIState={result} while deleting {apislug=} for user={token.sub}")
+    logger.critical(
+        f"Unreachable: APIState={result} while deleting {apislug=} for user={token.sub}"
+    )
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -140,7 +144,9 @@ async def disable(
     if result == APIState.DISABLED:
         logger.info(f"Disabled: {apislug=} for user={token.sub}")
         return {"disabled": True}
-    logger.critical(f"Unreachable: APIState={result} while disabling {apislug=} for user={token.sub}")
+    logger.critical(
+        f"Unreachable: APIState={result} while disabling {apislug=} for user={token.sub}"
+    )
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -166,7 +172,9 @@ async def enable(
     if result == APIState.ENABLED:
         logger.info(f"Enabled: {apislug=} for user={token.sub}")
         return {"disabled": False}
-    logger.critical(f"Unreachable: APIState={result} while enabling {apislug=} for user={token.sub}")
+    logger.critical(
+        f"Unreachable: APIState={result} while enabling {apislug=} for user={token.sub}"
+    )
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
 

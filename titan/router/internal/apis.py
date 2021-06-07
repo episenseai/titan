@@ -30,10 +30,14 @@ async def freeze(request_data: FreezeAPIRequest):
         apislug=request_data.apislug,
     )
     if result is None:
-        logger.info(f"API freeze failed: (user={request_data.userid}, apislug={request_data.apislug}) does not exist.")
+        logger.info(
+            f"API freeze failed: (user={request_data.userid}, apislug={request_data.apislug}) does not exist."
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     if result is False:
-        logger.info(f"Unexpected: API freeze failed: (user={request_data.userid}, apislug={request_data.apislug})")
+        logger.info(
+            f"Unexpected: API freeze failed: (user={request_data.userid}, apislug={request_data.apislug})"
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown error")
     logger.info(f"API frozen: (user={request_data.userid}, apislug={request_data.apislug})")
 
@@ -50,7 +54,9 @@ async def unfreeze(request_data: FreezeAPIRequest):
         )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     if result is False:
-        logger.info(f"Unexpected: API unfreeze failed: (user={request_data.userid}, apislug={request_data.apislug})")
+        logger.info(
+            f"Unexpected: API unfreeze failed: (user={request_data.userid}, apislug={request_data.apislug})"
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown error")
     logger.info(f"API unfrozen: (user={request_data.userid}, apislug={request_data.apislug})")
 

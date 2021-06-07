@@ -61,14 +61,20 @@ async def get_xaccess_token(
     admin = await admins_db.get_admin(email=user.email, username=form_data.username)
 
     if admin is None:
-        logger.info(f"Failed admin login attempt: (username={form_data.username}, user={user.userid})")
+        logger.info(
+            f"Failed admin login attempt: (username={form_data.username}, user={user.userid})"
+        )
         raise credentials_error
 
     if admin.frozen:
-        logger.info(f"Admin frozen: can't issue admin token for (user={user.userid}, admin={admin.adminid})")
+        logger.info(
+            f"Admin frozen: can't issue admin token for (user={user.userid}, admin={admin.adminid})"
+        )
         raise frozen_error
 
-    is_verified = await admins_db.verify_password(password=form_data.password, password_hash=admin.password)
+    is_verified = await admins_db.verify_password(
+        password=form_data.password, password_hash=admin.password
+    )
 
     if not is_verified:
         logger.info(

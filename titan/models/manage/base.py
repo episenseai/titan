@@ -141,14 +141,17 @@ class PgSQLManageTable(PgSQLBase):
             exists = await self.exists_table_in_db()
             if not exists:
                 err_msg = (
-                    "Error creating table in database: " + f"(database={self.database.url}, table={self.table.name})",
+                    "Error creating table in database: "
+                    + f"(database={self.database.url}, table={self.table.name})",
                 )
                 await self.create_table_in_db()
                 exists = await self.exists_table_in_db()
                 if not exists:
                     RuntimeError(err_msg)
             else:
-                print(f"Table already exists: (database={self.database.url}, table={self.table.name})")
+                print(
+                    f"Table already exists: (database={self.database.url}, table={self.table.name})"
+                )
                 return
         except Exception as exc:
             RuntimeError(f"{err_msg}\n{exc}")

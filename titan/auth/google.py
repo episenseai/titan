@@ -195,8 +195,12 @@ class GoogleAuthClient(OAuth2AuthClient):
             granted_scope = granted_scope.split()
         for scope in self.requested_scope():
             if scope not in granted_scope:
-                if (scope == "https://www.googleapis.com/auth/userinfo.email" and "email" not in granted_scope) or (
-                    scope == "https://www.googleapis.com/auth/userinfo.profile" and "profile" not in granted_scope
+                if (
+                    scope == "https://www.googleapis.com/auth/userinfo.email"
+                    and "email" not in granted_scope
+                ) or (
+                    scope == "https://www.googleapis.com/auth/userinfo.profile"
+                    and "profile" not in granted_scope
                 ):
                     missing_scope.append(scope)
         if not missing_scope:

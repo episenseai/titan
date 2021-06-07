@@ -65,7 +65,9 @@ class JWTSettings(ImmutBaseModel):
     @validator("authjwt_algorithm", always=True)
     def validate_algorithm(cls, v):
         if v not in symmetric_crypto and v not in asymetric_crypto:
-            raise RuntimeError(f"authjwt_algorithm = '{v}' not in supported symmetric/asymetric list")
+            raise RuntimeError(
+                f"authjwt_algorithm = '{v}' not in supported symmetric/asymetric list"
+            )
         return v
 
     @validator("authjwt_denylist_token_types", each_item=True, always=True)
@@ -90,8 +92,12 @@ class JWTSettings(ImmutBaseModel):
 
     @root_validator(pre=False)
     def token_expires(cls, values):
-        if values.get("authjwt_access_token_expires") >= values.get("authjwt_refresh_token_expires"):
-            raise RuntimeError("authjwt_access_token_expires must be less than authjwt_refresh_token_expires")
+        if values.get("authjwt_access_token_expires") >= values.get(
+            "authjwt_refresh_token_expires"
+        ):
+            raise RuntimeError(
+                "authjwt_access_token_expires must be less than authjwt_refresh_token_expires"
+            )
         return values
 
     def get_secret_key(self, method: Optional[str] = None):

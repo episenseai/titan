@@ -67,7 +67,11 @@ class APIsTable(PgSQLBase):
         """
         If the API was deleted by the user, do not return in any subsequent queries.
         """
-        query = self.table.select().where(self.table.c.userid == userid).where(self.table.c.apislug == apislug)
+        query = (
+            self.table.select()
+            .where(self.table.c.userid == userid)
+            .where(self.table.c.apislug == apislug)
+        )
         record = await self.database.fetch_one(query=query)
         if record is None:
             return None
@@ -85,7 +89,9 @@ class APIsTable(PgSQLBase):
         records = await self.database.fetch_all(query=query)
         if not records:
             return AllAPIsInDB(apis=[])
-        return AllAPIsInDB(apis=({**record} for record in records if record.get("deleted") is False))
+        return AllAPIsInDB(
+            apis=({**record} for record in records if record.get("deleted") is False)
+        )
 
     async def create(self, userid: UUID4, description: str) -> Optional[NewAPI]:
         """

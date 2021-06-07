@@ -23,7 +23,9 @@ class AdminsTable(PgSQLBase):
 
     async def get_admin(self, email: str, username: str) -> Optional[AdminInDB]:
         query = (
-            self.table.select().where(self.table.columns.email == email).where(self.table.columns.username == username)
+            self.table.select()
+            .where(self.table.columns.email == email)
+            .where(self.table.columns.username == username)
         )
         # returns None if the admin is not in DB
         admin = await self.database.fetch_one(query=query)

@@ -5,9 +5,9 @@ from typing import Optional, Union
 
 import redis
 
+from ..logger import logger
 from ..utils import ImmutBaseModel
 from .idp import IdentityProvider
-from ..logger import logger
 
 
 class StateToken(ImmutBaseModel):
@@ -44,7 +44,9 @@ class StateToken(ImmutBaseModel):
         return state
 
     @classmethod
-    def issue(cls, idp: IdentityProvider, ustate: Optional[str] = None, with_nonce: bool = False) -> "StateToken":
+    def issue(
+        cls, idp: IdentityProvider, ustate: Optional[str] = None, with_nonce: bool = False
+    ) -> "StateToken":
         state = cls.gen_state()
         if with_nonce:
             nonce = cls.gen_state()
@@ -61,7 +63,9 @@ class StateToken(ImmutBaseModel):
 
 class StateTokensDB:
     def __init__(self, redis_host: str, redis_port: str, redis_db: int):
-        self.redis = redis.Redis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
+        self.redis = redis.Redis(
+            host=redis_host, port=redis_port, db=redis_db, decode_responses=True
+        )
         self.expire_delta = timedelta(minutes=8)
 
     def store(self, token: StateToken):

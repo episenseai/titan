@@ -63,7 +63,9 @@ async def new_apis_table():
 
 @cli.command("schema")
 @setup_wrapper
-async def print_table_schema(table: str = typer.Argument(..., help="must be one of [users, admins, apis]")):
+async def print_table_schema(
+    table: str = typer.Argument(..., help="must be one of [users, admins, apis]")
+):
     table = table.strip().lower()
     pg = None
     if table == "users":
@@ -87,7 +89,9 @@ async def create_admin(
     password: str,
     scope: str,
 ):
-    val = await admins_db_internal.create(email=email, username=username, password=password, scope=scope)
+    val = await admins_db_internal.create(
+        email=email, username=username, password=password, scope=scope
+    )
     debug(val)
 
 

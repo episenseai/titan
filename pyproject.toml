@@ -33,13 +33,13 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
-line-length = 120
+line-length = 100
 exclude = "(.eggs|.git|.hg|.mypy_cache|.pytest_cache|.ipynb_checkpoints|.nox|.tox|.venv|.svn|_build|buck-out|build|dist)"
 
 [tool.isort]
 profile = "black"
 src_paths = ["titan", "tests"]
-line_length = 120
+line_length = 100
 
 [tool.pyright]
 include = ["titan"]

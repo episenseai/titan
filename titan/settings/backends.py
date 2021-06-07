@@ -37,7 +37,9 @@ async def check_table_existence():
     for db in dbs:
         exists = await db.exists_table_in_db()
         if not exists:
-            raise RuntimeError(f"Table missing: (database={db.database.url}, table={db.table.name})")
+            raise RuntimeError(
+                f"Table missing: (database={db.database.url}, table={db.table.name})"
+            )
 
 
 async def initialize_JWKS_keys():

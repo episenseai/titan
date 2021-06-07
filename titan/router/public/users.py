@@ -9,7 +9,12 @@ from ...auth.state import StateToken
 from ...exceptions.exc import Oauth2AuthError, OAuth2EmailPrivdedError
 from ...logger import logger
 from ...settings.backends import state_tokens_db, users_db
-from ...settings.idp import github_auth_client, github_login_client, google_auth_client, google_login_client
+from ...settings.idp import (
+    github_auth_client,
+    github_login_client,
+    google_auth_client,
+    google_login_client,
+)
 from ...tokens import TokenClaims
 from ...utils import ImmutBaseModel
 
@@ -79,7 +84,9 @@ async def get_access_token(
 
     state_token = state_tokens_db.pop_and_verify(state)
     if not state_token:
-        logger.info(f"Suspcious user login attempt: state_token not issued 'state' ({request.query_params=})")
+        logger.info(
+            f"Suspcious user login attempt: state_token not issued 'state' ({request.query_params=})"
+        )
         raise authentication_error
 
     if state_token.idp == IdentityProvider.github:
@@ -127,11 +134,15 @@ async def get_access_token(
         if new_user is None:
             logger.error(f"Create new user: (idp={state_token.idp}, email={auth_user.email})")
             raise authentication_error
-        logger.info(f"Created new user: (idp={state_token.idp}, user={new_user.userid}, scope={SIGNUP_SCOPE})")
+        logger.info(
+            f"Created new user: (idp={state_token.idp}, user={new_user.userid}, scope={SIGNUP_SCOPE})"
+        )
         user = new_user
     else:
         if user.idp != state_token.idp:
-            logger.info(f"Account exists error: (idp={state_token.idp}, account_idp={user.idp}, user={user.userid}")
+            logger.info(
+                f"Account exists error: (idp={state_token.idp}, account_idp={user.idp}, user={user.userid}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Account already exists with a different login provider",

@@ -51,7 +51,9 @@ async def validate_ttype(request: Request, ttype: TokenType) -> None:
         decoded_token: DecodedToken = request.state.decoded_token
         if decoded_token.ttype != ttype:
             error_msg = "Not authenticated"
-            logger.error(f"{error_msg}: ({ttype=}, {decoded_token.ttype=}, user={decoded_token.sub})")
+            logger.error(
+                f"{error_msg}: ({ttype=}, {decoded_token.ttype=}, user={decoded_token.sub})"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=error_msg,
