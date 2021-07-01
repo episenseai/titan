@@ -5,12 +5,19 @@ from devtools import debug
 from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
 from .models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
 from .models.public import AdminsTable, APIsTable, UsersTable
-from .settings.oauth2 import TEST_ADMINS_TABLE, TEST_APIS_TABLE, TEST_PGSQL_URL, TEST_USERS_TABLE
+from .settings.oauth2 import (
+    TEST_ADMINS_TABLE,
+    TEST_APIS_TABLE,
+    TEST_PGSQL_URL,
+    TEST_USERS_TABLE,
+    TEST_POSTGRES_USER,
+    TEST_POSTGRES_PASSWORD,
+)
 from .utils import coro
 
 cli = typer.Typer()
 
-TEST_DATABSE = Database(TEST_PGSQL_URL)
+TEST_DATABSE = Database(TEST_PGSQL_URL, user=TEST_POSTGRES_USER, password=TEST_POSTGRES_PASSWORD)
 
 
 def setup_wrapper(f):
