@@ -41,7 +41,11 @@ def get_oauth2_settings() -> OAuth2Settings:
 
 get_oauth2_settings()
 
-TEST_PGSQL_URL = "postgresql://localhost/testdb"
+# dockerizer postgres
+TEST_POSTGRES_DB = "mypostgresdb"
+TEST_POSTGRES_USER = "postgres"
+TEST_POSTGRES_PASSWORD = "password123"
+TEST_PGSQL_URL = f"postgresql://localhost/{TEST_POSTGRES_DB}"
 
 TEST_USERS_TABLE = "testusers"
 TEST_ADMINS_TABLE = "testadmins"

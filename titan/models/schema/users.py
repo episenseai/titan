@@ -33,7 +33,7 @@ def users_schema(users_table: str) -> Table:
             postgresql.UUID(),
             nullable=False,
             unique=True,
-            server_default=sqlalchemy.text("uuid_generate_v4()"),
+            server_default=sqlalchemy.text("gen_random_uuid()"),
         ),
         # We create the account only when email is verified on the oauth2 provider side.
         sqlalchemy.Column("email", sqlalchemy.String(length=254), primary_key=True),

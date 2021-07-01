@@ -22,22 +22,22 @@ class PgSQLManageTable(PgSQLBase):
         """
         return sqlalchemy.schema.CreateTable(self.table).compile(dialect=postgresql.dialect())
 
-    async def exists_uuid_ossp_extension(self) -> bool:
-        query = "SELECT exists(SELECT * FROM pg_extension WHERE extname = 'uuid-ossp');"
+    async def exists_pgcrypto_extension(self) -> bool:
+        query = "SELECT exists(SELECT * FROM pg_extension WHERE extname = 'pgcrypto');"
 
         result = await self.database.fetch_one(query=query)
 
         if result is None or not isinstance(result.get("exists"), bool):
             raise RuntimeError(
-                'Could not check whether "uuid-ossp" extension exists: '
+                'Could not check whether "pgcrypto" extension exists: '
                 + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
             )
         return result.get("exists")
 
-    async def create_uuid_ossp_extension(self):
-        query = 'CREATE EXTENSION "uuid-ossp"'
+    async def create_pycrypto_extension(self):
+        query = 'CREATE EXTENSION "pgcrypto"'
         print(
-            f'Creating "uuid-ossp" extension: (database={self.database.url}, table={self.table.name})',
+            f'Creating "pgcrypto" extension: (database={self.database.url}, table={self.table.name})',
         )
         await self.database.fetch_one(query=query)
 
@@ -127,13 +127,13 @@ class PgSQLManageTable(PgSQLBase):
                     + f"(database={self.database.url}, table={self.table.name})",
                 )
 
-        exists = await self.exists_uuid_ossp_extension()
+        exists = await self.exists_pgcrypto_extension()
         if not exists:
-            await self.create_uuid_ossp_extension()
-            exists = await self.exists_uuid_ossp_extension()
+            await self.create_pycrypto_extension()
+            exists = await self.exists_pgcrypto_extension()
             if not exists:
                 RuntimeError(
-                    'Error creating "uuid-ossp" extension: '
+                    'Error creating "pgcrypto" extension: '
                     + f"(database={self.database.url}, table={self.table.name})",
                 )
 

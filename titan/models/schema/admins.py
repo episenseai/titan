@@ -33,7 +33,7 @@ def admins_schema(admins_table: str) -> Table:
             postgresql.UUID(),
             nullable=False,
             unique=True,
-            server_default=sqlalchemy.text("uuid_generate_v4()"),
+            server_default=sqlalchemy.text("gen_random_uuid()"),
         ),
         # email id of the admin ***(email must exist in 'users` table)***
         # Do not add foriegn key constraint. Admins must be added manually to
