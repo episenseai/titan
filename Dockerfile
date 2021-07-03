@@ -3,6 +3,10 @@
 ARG DEBIAN_FRONTEND=noninteractive
 
 FROM python:3.9.6-slim-buster AS python-base
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 WORKDIR /app
 
 
@@ -15,11 +19,10 @@ RUN set -x; \
             rm -rf /var/lib/apt/lists/*; \
         fi
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.1.7 \
+ENV POETRY_VERSION=1.1.7 \
     POETRY_HOME="/opt/poetry" \
-    POETRY_NO_INTERACTION=1
+    POETRY_NO_INTERACTION=1 \
+    PIP_DEFAULT_TIMEOUT=100
 
 ENV PATH="$POETRY_HOME/bin:$PATH"
 
