@@ -7,24 +7,28 @@ from ..models.public import AdminsTable, APIsTable, UsersTable
 from .env import ADMINS_TABLE, APIS_TABLE, USERS_TABLE, env
 from .idp import google_auth_client
 
-TEST_DATABSE = Database(url=env().postgres_url)
+postgres_database = Database(
+    url=env().postgres_url,
+    user=env().POSTGRESQL_USER,
+    password=env().POSTGRESQL_PASSWORD.get_secret_value(),
+)
 
-users_db = UsersTable(TEST_DATABSE, USERS_TABLE)
-users_db_internal = UsersTableInternal(TEST_DATABSE, USERS_TABLE)
+users_db = UsersTable(postgres_database, USERS_TABLE)
+users_db_internal = UsersTableInternal(postgres_database, USERS_TABLE)
 
-admins_db = AdminsTable(TEST_DATABSE, ADMINS_TABLE)
-admins_db_internal = AdminsTableInternal(TEST_DATABSE, ADMINS_TABLE)
+admins_db = AdminsTable(postgres_database, ADMINS_TABLE)
+admins_db_internal = AdminsTableInternal(postgres_database, ADMINS_TABLE)
 
-apis_db = APIsTable(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
-apis_db_internal = APIsTableInternal(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
+apis_db = APIsTable(postgres_database, APIS_TABLE, USERS_TABLE)
+apis_db_internal = APIsTableInternal(postgres_database, APIS_TABLE, USERS_TABLE)
 
 
 async def check_table_existence():
     dbs = []
 
-    dbs.append(UsersTableManage(TEST_DATABSE, USERS_TABLE))
-    dbs.append(AdminsTableManage(TEST_DATABSE, ADMINS_TABLE))
-    dbs.append(APIsTableManage(TEST_DATABSE, APIS_TABLE, USERS_TABLE))
+    dbs.append(UsersTableManage(postgres_database, USERS_TABLE))
+    dbs.append(AdminsTableManage(postgres_database, ADMINS_TABLE))
+    dbs.append(APIsTableManage(postgres_database, APIS_TABLE, USERS_TABLE))
 
     for db in dbs:
         exists = await db.exists_table_in_db()

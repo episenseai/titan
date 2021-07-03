@@ -54,8 +54,8 @@ RUN --mount=from=python-requirements,src=/app/target,target=/app/target set -x &
 
 COPY log_config.json titan ./titan/
 
-EXPOSE 8000
+EXPOSE 8001
 
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8000", \
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8001", \
      "--log-config", "titan/log_config.json", \
      "titan.main:app"]

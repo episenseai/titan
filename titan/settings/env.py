@@ -10,16 +10,17 @@ APIS_TABLE = "testapis"
 
 
 class Settings(BaseSettings):
+    PORT: int = 8001
     REDIS_PASSWORD: SecretStr = "password123"
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DATABASE_NUMBER: int = 2
 
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: SecretStr = "password123"
-    POSTGRES_HOST: str = "localhost"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_DATABASE: str = "mypostgresdb"
+    POSTGRESQL_USER: str = "postgres"
+    POSTGRESQL_PASSWORD: SecretStr = "password123"
+    POSTGRESQL_HOST: str = "localhost"
+    POSTGRESQL_PORT: int = 5432
+    POSTGRESQL_DATABASE: str = "mypostgresdb"
 
     GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
     GITHUB_CLIENT_SECRET: SecretStr = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"
@@ -34,16 +35,8 @@ class Settings(BaseSettings):
 
     @property
     def postgres_url(self) -> str:
-        # postgresql://[[username]:[password]]@localhost:5432/dbname
-        if self.POSTGRES_PASSWORD:
-            user_pass = f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD.get_secret_value()}"
-        else:
-            user_pass = f"{self.POSTGRES_USER}"
-
-        if user_pass:
-            user_pass = f"{user_pass}@"
-
-        return f"postgresql://{user_pass}{self.POSTGRES_HOST}/{self.POSTGRES_DATABASE}"
+        # postgresql://localhost:5432/dbname
+        return f"postgresql://{self.POSTGRESQL_HOST}/{self.POSTGRESQL_DATABASE}"
 
     class Config:
         env_prefix = "TITAN_"

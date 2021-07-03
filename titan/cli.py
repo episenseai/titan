@@ -9,7 +9,11 @@ from .utils import coro
 
 cli = typer.Typer()
 
-TEST_DATABSE = Database(url=env().postgres_url)
+postgres_database = Database(
+    url=env().postgres_url,
+    user=env().POSTGRESQL_USER,
+    password=env().POSTGRESQL_PASSWORD.get_secret_value(),
+)
 
 
 def setup_wrapper(f):
@@ -21,25 +25,25 @@ def setup_wrapper(f):
     @wraps(f)
     @coro
     async def wrapper(*args, **kwargs):
-        await TEST_DATABSE.connect()
+        await postgres_database.connect()
         result = await f(*args, **kwargs)
-        await TEST_DATABSE.disconnect()
+        await postgres_database.disconnect()
         return result
 
     return wrapper
 
 
-users_db = UsersTable(TEST_DATABSE, USERS_TABLE)
-users_db_internal = UsersTableInternal(TEST_DATABSE, USERS_TABLE)
-users_db_manage = UsersTableManage(TEST_DATABSE, USERS_TABLE)
+users_db = UsersTable(postgres_database, USERS_TABLE)
+users_db_internal = UsersTableInternal(postgres_database, USERS_TABLE)
+users_db_manage = UsersTableManage(postgres_database, USERS_TABLE)
 
-admins_db = AdminsTable(TEST_DATABSE, ADMINS_TABLE)
-admins_db_internal = AdminsTableInternal(TEST_DATABSE, ADMINS_TABLE)
-admins_db_manage = AdminsTableManage(TEST_DATABSE, ADMINS_TABLE)
+admins_db = AdminsTable(postgres_database, ADMINS_TABLE)
+admins_db_internal = AdminsTableInternal(postgres_database, ADMINS_TABLE)
+admins_db_manage = AdminsTableManage(postgres_database, ADMINS_TABLE)
 
-apis_db = APIsTable(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
-apis_db_internal = APIsTableInternal(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
-apis_db_manage = APIsTableManage(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
+apis_db = APIsTable(postgres_database, APIS_TABLE, USERS_TABLE)
+apis_db_internal = APIsTableInternal(postgres_database, APIS_TABLE, USERS_TABLE)
+apis_db_manage = APIsTableManage(postgres_database, APIS_TABLE, USERS_TABLE)
 
 
 @cli.command("new-users-table")

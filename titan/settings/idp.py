@@ -2,7 +2,7 @@ from ..auth.github import GithubAuthClient, GithubLoginClient
 from ..auth.google import GoogleAuthClient, GoogleLoginClient
 from .env import env
 
-AUTH_REDIRECT_URI = "http://localhost:8000/auth"
+AUTH_REDIRECT_URI = f"http://localhost:{env().PORT}/auth"
 
 GITHUB_CLIENT_SCOPE = "read:user user:email"
 
