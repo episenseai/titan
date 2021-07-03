@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-.venv/bin/uvicorn titan.main:app --reload --reload-dir titan --log-config log_config.json
+.venv/bin/uvicorn --host 0.0.0.0 --port 8000 --reload --reload-dir titan --log-config log_config.json titan.main:app

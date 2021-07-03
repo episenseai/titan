@@ -1,23 +1,15 @@
 import typer
 from databases import Database
-from devtools import debug
 
 from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
 from .models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
 from .models.public import AdminsTable, APIsTable, UsersTable
-from .settings.oauth2 import (
-    TEST_ADMINS_TABLE,
-    TEST_APIS_TABLE,
-    TEST_PGSQL_URL,
-    TEST_USERS_TABLE,
-    TEST_POSTGRES_USER,
-    TEST_POSTGRES_PASSWORD,
-)
+from .settings.env import ADMINS_TABLE, APIS_TABLE, USERS_TABLE, env
 from .utils import coro
 
 cli = typer.Typer()
 
-TEST_DATABSE = Database(TEST_PGSQL_URL, user=TEST_POSTGRES_USER, password=TEST_POSTGRES_PASSWORD)
+TEST_DATABSE = Database(url=env().postgres_url)
 
 
 def setup_wrapper(f):
@@ -37,17 +29,17 @@ def setup_wrapper(f):
     return wrapper
 
 
-users_db = UsersTable(TEST_DATABSE, TEST_USERS_TABLE)
-users_db_internal = UsersTableInternal(TEST_DATABSE, TEST_USERS_TABLE)
-users_db_manage = UsersTableManage(TEST_DATABSE, TEST_USERS_TABLE)
+users_db = UsersTable(TEST_DATABSE, USERS_TABLE)
+users_db_internal = UsersTableInternal(TEST_DATABSE, USERS_TABLE)
+users_db_manage = UsersTableManage(TEST_DATABSE, USERS_TABLE)
 
-admins_db = AdminsTable(TEST_DATABSE, TEST_ADMINS_TABLE)
-admins_db_internal = AdminsTableInternal(TEST_DATABSE, TEST_ADMINS_TABLE)
-admins_db_manage = AdminsTableManage(TEST_DATABSE, TEST_ADMINS_TABLE)
+admins_db = AdminsTable(TEST_DATABSE, ADMINS_TABLE)
+admins_db_internal = AdminsTableInternal(TEST_DATABSE, ADMINS_TABLE)
+admins_db_manage = AdminsTableManage(TEST_DATABSE, ADMINS_TABLE)
 
-apis_db = APIsTable(TEST_DATABSE, TEST_APIS_TABLE, TEST_USERS_TABLE)
-apis_db_internal = APIsTableInternal(TEST_DATABSE, TEST_APIS_TABLE, TEST_USERS_TABLE)
-apis_db_manage = APIsTableManage(TEST_DATABSE, TEST_APIS_TABLE, TEST_USERS_TABLE)
+apis_db = APIsTable(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
+apis_db_internal = APIsTableInternal(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
+apis_db_manage = APIsTableManage(TEST_DATABSE, APIS_TABLE, USERS_TABLE)
 
 
 @cli.command("new-users-table")
@@ -99,7 +91,7 @@ async def create_admin(
     val = await admins_db_internal.create(
         email=email, username=username, password=password, scope=scope
     )
-    debug(val)
+    print(val)
 
 
 @cli.command("freeze-admin-username")
@@ -112,7 +104,7 @@ async def freeze_admin_username(
         val = await admins_db_internal.freeze_username(username=username)
     else:
         val = await admins_db_internal.unfreeze_username(username=username)
-    debug(val)
+    print(val)
 
 
 @cli.command("freeze-admin-adminid")
@@ -125,7 +117,7 @@ async def freeze_admin_adminid(
         val = await admins_db_internal.freeze_adminid(adminid=adminid)
     else:
         val = await admins_db_internal.unfreeze_adminid(adminid=adminid)
-    debug(val)
+    print(val)
 
 
 @cli.command("create-api")
@@ -135,11 +127,14 @@ async def create_api(
     description: str = "adding test api",
 ):
     new_api = await apis_db.create(userid, description)
-    debug(new_api)
+    print(new_api)
     if new_api:
         api = await apis_db.get(userid=new_api.userid, apislug=new_api.apislug)
-        verified = apis_db.verify_client_secret(new_api.client_secret, api.secret_hash)
-        debug(verified)
+        if api is None:
+            print("Could not get api after creation")
+        else:
+            verified = apis_db.verify_client_secret(new_api.client_secret, api.secret_hash)
+            print(verified)
 
 
 @cli.command("get-api")
@@ -149,7 +144,7 @@ async def get_api(
     apislug: str,
 ):
     api = await apis_db.get(userid, apislug)
-    debug(api)
+    print(api)
 
 
 @cli.command("list-apis")
@@ -158,7 +153,7 @@ async def list_apis(
     userid: str,
 ):
     apis = await apis_db.get_all(userid=userid)
-    debug(apis)
+    print(apis)
 
 
 @cli.command("disable-api")
@@ -168,7 +163,7 @@ async def disable_api(
     apislug: str,
 ):
     val = await apis_db.disable(userid=userid, apislug=apislug)
-    debug(val)
+    print(val)
 
 
 @cli.command("enable-api")
@@ -178,7 +173,7 @@ async def enable_api(
     apislug: str,
 ):
     val = await apis_db.enable(userid=userid, apislug=apislug)
-    debug(val)
+    print(val)
 
 
 @cli.command("delete-api")
@@ -188,7 +183,7 @@ async def delete_api(
     apislug: str,
 ):
     val = await apis_db.delete(userid=userid, apislug=apislug)
-    debug(val)
+    print(val)
 
 
 @cli.command("newkey-api")
@@ -198,7 +193,7 @@ async def key_api(
     apislug: str,
 ):
     val = await apis_db.update_secret(userid=userid, apislug=apislug)
-    debug(val)
+    print(val)
 
 
 @cli.command("list-apis-internal")
@@ -207,7 +202,7 @@ async def list_apis_manage(
     userid: str,
 ):
     apis = await apis_db_internal.get_all(userid=userid)
-    debug(apis)
+    print(apis)
 
 
 @cli.command("freeze-api")
@@ -221,7 +216,7 @@ async def freeze_api(
         val = await apis_db_internal.freeze(userid=userid, apislug=apislug)
     else:
         val = await apis_db_internal.unfreeze(userid=userid, apislug=apislug)
-    debug(val)
+    print(val)
 
 
 @cli.command("freeze-user-email")
@@ -234,7 +229,7 @@ async def freeze_user_email(
         val = await apis_db_internal.freeze_email(email=email)
     else:
         val = await apis_db_internal.unfreeze_email(email=email)
-    debug(val)
+    print(val)
 
 
 @cli.command("freeze-user-userid")
@@ -247,7 +242,7 @@ async def freeze_user_userid(
         val = await users_db_internal.freeze_userid(userid=userid)
     else:
         val = await users_db_internal.unfreeze_userid(userid=userid)
-    debug(val)
+    print(val)
 
 
 if __name__ == "__main__":

@@ -62,9 +62,9 @@ class StateToken(ImmutBaseModel):
 
 
 class StateTokensDB:
-    def __init__(self, redis_host: str, redis_port: str, redis_db: int):
+    def __init__(self, redis_host: str, redis_port: int, redis_password: str, redis_db: int):
         self.redis = redis.Redis(
-            host=redis_host, port=redis_port, db=redis_db, decode_responses=True
+            host=redis_host, port=redis_port, password=redis_password, db=redis_db
         )
         self.expire_delta = timedelta(minutes=8)
 

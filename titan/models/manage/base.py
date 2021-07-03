@@ -2,7 +2,6 @@ from typing import Optional
 
 import sqlalchemy
 from databases import Database
-from devtools import debug
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 

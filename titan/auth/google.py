@@ -3,7 +3,6 @@ from typing import Any, Optional, Union
 from urllib.parse import urlencode
 
 import httpx
-from devtools import debug
 from jose import jwt
 from jose.exceptions import JOSEError
 from pydantic import AnyHttpUrl, SecretStr
@@ -301,6 +300,7 @@ class GoogleAuthClient(OAuth2AuthClient):
                 raise Oauth2AuthError(f"Missing {key=} for user info during google auth")
         full_name = user_dict.get("name", None)
         if full_name is None:
+            full_name = ""
             given_name = user_dict.get("given_name", None)
             family_name = user_dict.get("family_name", None)
             if given_name is not None:

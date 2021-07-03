@@ -1,31 +1,39 @@
 from ..auth.github import GithubAuthClient, GithubLoginClient
 from ..auth.google import GoogleAuthClient, GoogleLoginClient
-from .oauth2 import get_oauth2_settings
+from .env import env
+
+AUTH_REDIRECT_URI = "http://localhost:8000/auth"
+
+GITHUB_CLIENT_SCOPE = "read:user user:email"
+
+GOOGLE_CLIENT_SCOPE = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+# 'iss' claim in the JWT id_token from google
+GOOGLE_CLIENT_ISS = "https://accounts.google.com"
 
 github_login_client: GithubLoginClient = GithubLoginClient.new(
-    client_id=get_oauth2_settings().github_client_id,
-    scope=get_oauth2_settings().github_client_scope,
-    redirect_uri=get_oauth2_settings().github_redirect_uri,
+    client_id=env().GITHUB_CLIENT_ID,
+    scope=GITHUB_CLIENT_SCOPE,
+    redirect_uri=AUTH_REDIRECT_URI,
 )
 
 github_auth_client: GithubAuthClient = GithubAuthClient.new(
-    client_id=get_oauth2_settings().github_client_id,
-    scope=get_oauth2_settings().github_client_scope,
-    redirect_uri=get_oauth2_settings().github_redirect_uri,
-    client_secret=get_oauth2_settings().github_client_secret,
+    client_id=env().GITHUB_CLIENT_ID,
+    scope=GITHUB_CLIENT_SCOPE,
+    redirect_uri=AUTH_REDIRECT_URI,
+    client_secret=env().GITHUB_CLIENT_SECRET.get_secret_value(),
 )
 
 google_login_client: GoogleLoginClient = GoogleLoginClient.new(
-    client_id=get_oauth2_settings().google_client_id,
-    scope=get_oauth2_settings().google_client_scope,
-    redirect_uri=get_oauth2_settings().google_redirect_uri,
-    iss=get_oauth2_settings().google_client_iss,
+    client_id=env().GOOGLE_CLIENT_ID,
+    scope=GOOGLE_CLIENT_SCOPE,
+    redirect_uri=AUTH_REDIRECT_URI,
+    iss=GOOGLE_CLIENT_ISS,
 )
 
 google_auth_client: GoogleAuthClient = GoogleAuthClient.new(
-    client_id=get_oauth2_settings().google_client_id,
-    scope=get_oauth2_settings().google_client_scope,
-    redirect_uri=get_oauth2_settings().google_redirect_uri,
-    client_secret=get_oauth2_settings().google_client_secret,
-    iss=get_oauth2_settings().google_client_iss,
+    client_id=env().GOOGLE_CLIENT_ID,
+    scope=GOOGLE_CLIENT_SCOPE,
+    redirect_uri=AUTH_REDIRECT_URI,
+    iss=GOOGLE_CLIENT_ISS,
+    client_secret=env().GOOGLE_CLIENT_SECRET.get_secret_value(),
 )
