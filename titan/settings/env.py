@@ -10,7 +10,7 @@ APIS_TABLE = "testapis"
 
 
 class Settings(BaseSettings):
-    PORT: int = 8001
+    PORT: int = 3001
     REDIS_PASSWORD: SecretStr = "password123"
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
