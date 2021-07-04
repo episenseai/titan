@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "titan"
-version = "0.1.0"
+version = "0.1.1"
 description = "Authentiction + Authorization app"
 authors = ["Sushant Kumar <sushant.mithila@gmail.com>"]
 readme = "README.md"
