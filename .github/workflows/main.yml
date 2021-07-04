@@ -24,10 +24,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -52,5 +48,5 @@ jobs:
           VERSION_TAG: ${{ steps.get_version.outputs.VERSION }}
         run: |
           if [ -z "${VERSION_TAG}" ]; then echo VERSION_TAG is empty && exit 1; fi
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION_TAG-$IMAGE_TAG .
+          DOCKER_BUILDKIT=1 docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION_TAG-$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION_TAG-$IMAGE_TAG
