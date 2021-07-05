@@ -46,6 +46,17 @@ apis_db_internal = APIsTableInternal(postgres_database, APIS_TABLE, USERS_TABLE)
 apis_db_manage = APIsTableManage(postgres_database, APIS_TABLE, USERS_TABLE)
 
 
+@cli.command("create-new-tables", short_help="Creat new tables for users, admins and apis.")
+@setup_wrapper
+async def create_new_tables():
+    print("** Trying to create new (users) table for testing.")
+    await users_db_manage.create_table()
+    print("** Trying to create new (admins) table for testing.")
+    await admins_db_manage.create_table()
+    print("** Trying to create new (apis) table for testing.")
+    await apis_db_manage.create_table()
+
+
 @cli.command("new-users-table")
 @setup_wrapper
 async def new_users_table():
