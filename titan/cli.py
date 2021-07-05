@@ -57,24 +57,6 @@ async def create_new_tables():
     await apis_db_manage.create_table()
 
 
-@cli.command("new-users-table")
-@setup_wrapper
-async def new_users_table():
-    await users_db_manage.create_table()
-
-
-@cli.command("new-admins-table")
-@setup_wrapper
-async def new_admins_table():
-    await admins_db_manage.create_table()
-
-
-@cli.command("new-apis-table")
-@setup_wrapper
-async def new_apis_table():
-    await apis_db_manage.create_table()
-
-
 @cli.command("schema")
 @setup_wrapper
 async def print_table_schema(
