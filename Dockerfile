@@ -45,7 +45,7 @@ RUN --mount=from=python-requirements,src=/app/target,target=/app/target set -x &
         pip3 install --no-cache-dir -U pip && \
         pip3 install --no-cache-dir -U setuptools wheel && \
         pip3 install --no-cache-dir -r target/requirements-prod.txt
-        # if ! command -v top > /dev/null; then \
+        # if ! command -v htop > /dev/null; then \
         #     apt-get update; \
         #     apt-get install --no-install-recommends -y htop; \
         #     rm -rf /var/lib/apt/lists/*; \
