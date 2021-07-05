@@ -52,7 +52,7 @@ RUN --mount=from=python-requirements,src=/app/target,target=/app/target set -x &
         # fi
 
 
-COPY log_config.json titan ./titan/
+COPY titan ./titan/
 
 EXPOSE 3001
 
