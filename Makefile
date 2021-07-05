@@ -12,7 +12,7 @@ VENV_DIR := $(shell poetry env info -p)
 install: clean
 	@[ -d "$(VENV_DIR)" ] && rm -rf $(VENV_DIR) && echo "Deleted current virtualenv..." || true
 	@poetry env use python
-	@poetry run pip install -U pip setuptools wheel
+	@poetry run pip install -U pip && poetry run pip install -U setuptools wheel
 	@poetry install || SYSTEM_VERSION_COMPAT=1 poetry install
 
 .PHONY: format
