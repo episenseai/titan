@@ -4,6 +4,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 FROM python:3.9.6-slim-buster AS python-base
 
+RUN groupadd --gid 1000 python && useradd --uid 1000 --gid python --shell /bin/bash --create-home python
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
@@ -55,6 +57,8 @@ RUN --mount=from=python-requirements,src=/app/target,target=/app/target set -x &
 COPY titan ./titan/
 
 EXPOSE 3001
+
+USER python
 
 CMD ["uvicorn", "--host", "0.0.0.0", "--port", "3001", \
      "--log-config", "titan/log_config.json", \
