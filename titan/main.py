@@ -1,10 +1,18 @@
+from asyncpg.exceptions import (
+    CannotConnectNowError,
+    ClientCannotConnectError,
+    ConnectionDoesNotExistError,
+    ConnectionFailureError,
+    ConnectionRejectionError,
+)
 from fastapi import FastAPI
 
-
 from .exceptions.passwd import passwd_exception_handlers
+from .logger import logger
 from .router.internal import admins_router_internal, apis_router_internal, users_router_internal
 from .router.public import admins_router, apis_router, users_router
-from .settings.backends import postgres_database, check_table_existence, initialize_JWKS_keys
+from .settings.backends import check_table_existence, initialize_JWKS_keys, postgres_database
+from .settings.env import env
 
 all_exception_handlers = {}
 all_exception_handlers.update(passwd_exception_handlers)
@@ -14,18 +22,30 @@ app = FastAPI(exception_handlers=all_exception_handlers)  # noqa
 
 @app.on_event("startup")
 async def startup():
-    for x in range(3):
+    # seconds
+    backoff_time = 5
+    for x in range(4):
         try:
             await postgres_database.connect()
             break
-        except ConnectionRefusedError as ex:
-            if x != 2:
-                print("Will try connecting to postgres in a few seconds")
+        except (
+            ConnectionRefusedError,
+            CannotConnectNowError,
+            ClientCannotConnectError,
+            ConnectionDoesNotExistError,
+            ConnectionFailureError,
+            ConnectionRejectionError,
+        ) as ex:
+            if x != 3:
+                logger.warn(f"Could not connect to {env().postgres_url}")
+                logger.info(f"Retry connecting in {backoff_time}sec {env().postgres_url}")
                 import time
 
-                time.sleep(5)
+                time.sleep(backoff_time)
+                # linear backoff
+                backoff_time = backoff_time + 3
                 continue
-            print(f"Tried 3 times to connect to postgres database but failed: \n {ex}")
+            logger.exception(f"Tried 3 times to connect to postgres database but failed: \n {ex}")
             exit(1)
     await check_table_existence()
     # Run in production
