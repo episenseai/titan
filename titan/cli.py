@@ -1,19 +1,25 @@
+import json
+import logging.config
+
 import typer
 from databases import Database
 
+from .logger import logger
 from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
 from .models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
 from .models.public import AdminsTable, APIsTable, UsersTable
+from .settings.backends import check_table_existence, postgres_connect, postgres_database
 from .settings.env import ADMINS_TABLE, APIS_TABLE, USERS_TABLE, env
 from .utils import coro
 
 cli = typer.Typer()
 
-postgres_database = Database(
-    url=env().postgres_url,
-    user=env().POSTGRESQL_USER,
-    password=env().POSTGRESQL_PASSWORD.get_secret_value(),
-)
+
+def get_json_config():
+    config_file = "titan/log_config.json"
+    with open(config_file, "r", encoding="utf-8") as fd:
+        config = json.load(fd)
+    return config
 
 
 def setup_wrapper(f):
@@ -25,7 +31,12 @@ def setup_wrapper(f):
     @wraps(f)
     @coro
     async def wrapper(*args, **kwargs):
-        await postgres_database.connect()
+        log_config = get_json_config()
+        logging.config.dictConfig(log_config)
+
+        if not await postgres_connect():
+            exit(1)
+
         result = await f(*args, **kwargs)
         await postgres_database.disconnect()
         return result
@@ -49,11 +60,8 @@ apis_db_manage = APIsTableManage(postgres_database, APIS_TABLE, USERS_TABLE)
 @cli.command("create-new-tables", short_help="Creat new tables for users, admins and apis.")
 @setup_wrapper
 async def create_new_tables():
-    print("** Trying to create new (users) table for testing.")
     await users_db_manage.create_table()
-    print("** Trying to create new (admins) table for testing.")
     await admins_db_manage.create_table()
-    print("** Trying to create new (apis) table for testing.")
     await apis_db_manage.create_table()
 
 

@@ -5,12 +5,17 @@ from databases import Database
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.schema import Table
 
+from ...logger import logger
 from ..base import PgSQLBase
 
 
 class PgSQLManageTable(PgSQLBase):
     def __init__(self, database: Database, table: Table):
         super().__init__(database, table)
+
+    @property
+    def db_context(self) -> str:
+        return f"db={self.database.url}, tbl={self.table.name}"
 
     async def insert(self, values: Optional[dict] = None):
         await self.database.execute(query=self.table.insert(), values=values)
@@ -27,17 +32,15 @@ class PgSQLManageTable(PgSQLBase):
         result = await self.database.fetch_one(query=query)
 
         if result is None or not isinstance(result.get("exists"), bool):
-            raise RuntimeError(
-                'Could not check whether "pgcrypto" extension exists: '
-                + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
+            logger.error(
+                f"checking 'pgcrypto' extension: ({self.db_context}, result={dict(result)}"
             )
+            exit(1)
         return result.get("exists")
 
     async def create_pycrypto_extension(self):
         query = 'CREATE EXTENSION "pgcrypto"'
-        print(
-            f'Creating "pgcrypto" extension: (database={self.database.url}, table={self.table.name})',
-        )
+        logger.info(f"creating 'pgcrypto' extension: ({self.db_context})")
         await self.database.fetch_one(query=query)
 
     async def exists_trigger_set_timestamp(self) -> bool:
@@ -46,10 +49,10 @@ class PgSQLManageTable(PgSQLBase):
         result = await self.database.fetch_one(query=query)
 
         if result is None or not isinstance(result.get("exists"), bool):
-            raise RuntimeError(
-                "Could not check whether 'trigger_set_timestamp' function exists: "
-                + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
+            logger.error(
+                f"checking 'trigger_set_timestamp()': ({self.db_context}, result={dict(result)})"
             )
+            exit(1)
         return result.get("exists")
 
     async def create_trigger_set_timestamp(self):
@@ -62,9 +65,7 @@ class PgSQLManageTable(PgSQLBase):
         END;
         $$ LANGUAGE plpgsql;
         """
-        print(
-            f"Creating 'trigger_set_timestamp' function: (database={self.database.url}, table={self.table.name})",
-        )
+        logger.info(f"creating 'trigger_set_timestamp()': ({self.db_context})")
         await self.database.fetch_one(query=query)
 
     async def exists_table_in_db(self) -> bool:
@@ -73,15 +74,13 @@ class PgSQLManageTable(PgSQLBase):
         result = await self.database.fetch_one(query=query)
 
         if result is None or not isinstance(result.get("exists"), bool):
-            raise RuntimeError(
-                "Could not check the existence of table: "
-                + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
-            )
+            logger.error(f"checking table exists: ({self.db_context}, result={dict(result)})")
+            exit(1)
         return result.get("exists")
 
     async def create_table_in_db(self):
         query = sqlalchemy.schema.CreateTable(self.table)
-        print(f"Creating table: (database={self.database.url}, table={self.table.name})")
+        logger.info(f"creating table: ({self.db_context})")
         await self.database.fetch_one(query=query)
 
     async def exists_column_updated_at(self) -> bool:
@@ -96,10 +95,10 @@ class PgSQLManageTable(PgSQLBase):
         result = await self.database.fetch_one(query=query)
 
         if result is None or not isinstance(result.get("exists"), bool):
-            raise RuntimeError(
-                "Could not check the existence of column='updated_at': "
-                + f"(database={self.database.url}, table={self.table.name}) query_result={dict(result)}"
+            logger.error(
+                f"checking exists col=updated_at: ({self.db_context}, result={dict(result)})"
             )
+            exit(1)
         return result.get("exists")
 
     async def create_trigger_updated_at(self):
@@ -109,10 +108,7 @@ class PgSQLManageTable(PgSQLBase):
         FOR EACH ROW
         EXECUTE PROCEDURE trigger_set_timestamp();
         """
-        print(
-            "Creating trigger 'trigger_set_timestamp()' for column='updated_at': "
-            f"(database={self.database.url}, table={self.table.name})"
-        )
+        logger.info(f"creating 'trigger_set_timestamp()': ({self.db_context}, col=updated_at)")
         return await self.database.fetch_one(query=query)
 
     async def create_table(self):
@@ -121,51 +117,35 @@ class PgSQLManageTable(PgSQLBase):
             await self.create_trigger_set_timestamp()
             exists = await self.exists_trigger_set_timestamp()
             if not exists:
-                RuntimeError(
-                    "Error creating 'trigger_set_timestamp' function: "
-                    + f"(database={self.database.url}, table={self.table.name})",
+                logger.error(
+                    f"creating 'trigger_set_timestamp()': ({self.db_context})",
                 )
+                exit(1)
 
-        exists = await self.exists_pgcrypto_extension()
+        exists = await self.exists_pgcrypto_extension() or None
         if not exists:
             await self.create_pycrypto_extension()
             exists = await self.exists_pgcrypto_extension()
             if not exists:
-                RuntimeError(
-                    'Error creating "pgcrypto" extension: '
-                    + f"(database={self.database.url}, table={self.table.name})",
-                )
+                logger.error(f"creating 'pgcrypto' extension: ({self.db_context})")
+                exit(1)
 
-        try:
+        exists = await self.exists_table_in_db() or None
+        if not exists:
+            await self.create_table_in_db()
             exists = await self.exists_table_in_db()
             if not exists:
-                err_msg = (
-                    "Error creating table in database: "
-                    + f"(database={self.database.url}, table={self.table.name})",
-                )
-                await self.create_table_in_db()
-                exists = await self.exists_table_in_db()
-                if not exists:
-                    RuntimeError(err_msg)
-            else:
-                print(
-                    f"Table already exists: (database={self.database.url}, table={self.table.name})"
-                )
-                return
-        except Exception as exc:
-            RuntimeError(f"{err_msg}\n{exc}")
+                logger.error(f"creating table: ({self.db_context})")
+                exit(1)
+        else:
+            logger.warn(f"table exists: ({self.db_context})")
+            return
 
-        exists = await self.exists_column_updated_at()
+        exists = await self.exists_column_updated_at() or None
         if exists:
             try:
                 await self.create_trigger_updated_at()
             except Exception as exc:
-                RuntimeError(
-                    "Error creating 'trigger_set_timestamp' function: "
-                    + f"(database={self.database.url}, table={self.table.name})\n{exc}"
-                )
+                logger.exception(f"creating 'trigger_set_timestamp()': ({self.db_context})")
         else:
-            print(
-                "Skipping creating 'trigger_set_timestamp()' for column='updated_at': "
-                f"(database={self.database.url}, table={self.table.name})"
-            )
+            logger.info(f"exists 'trigger_set_timestamp()': ({self.db_context}, col=updated_at)")
