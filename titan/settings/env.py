@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     GITHUB_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
-    GOOGLE_CLIENT_SECRET: SecretStr = "WmUcqKFLcbiYSqghIIuUi4Hb"
+    GOOGLE_CLIENT_SECRET: SecretStr = "HO3XmTEiUGwnfFKkuy--rEA4"
     GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     @property

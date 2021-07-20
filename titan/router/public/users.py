@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Query, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
+from pydantic import UUID4
 
 from ...auth.models import IdentityProvider
 from ...auth.state import StateToken
@@ -57,6 +58,7 @@ class Token(ImmutBaseModel):
     expires_in: int
     refresh_token: Optional[str] = None
     full_name: Optional[str] = None
+    userid: UUID4
     picture: Optional[str] = None
     ustate: Optional[str] = None
 
@@ -76,20 +78,20 @@ async def get_access_token(
     )
 
     if error is not None:
-        logger.info(f"Auth callback error: ({error=}, {request.query_params=})")
+        logger.error(f"auth callback: ({error=}, {request.query_params=})")
         raise authentication_error
     if code is None:
-        logger.info(f"Auth callback error: missing 'code' ({request.query_params=})")
+        logger.error(f"auth callback: missing 'code' ({request.query_params=})")
         raise authentication_error
     # Ideally, this should not happen if `code` is present in callback.
     if state is None:
-        logger.info(f"Auth callback error: missing 'state' ({request.query_params=})")
+        logger.info(f"auth callback: missing 'state' ({request.query_params=})")
         raise authentication_error
 
     state_token = state_tokens_db.pop_and_verify(state)
     if not state_token:
         logger.info(
-            f"Suspcious user login attempt: state_token not issued 'state' ({request.query_params=})"
+            f"suspcious login attempt: state_token not issued or expired or used up ({request.query_params=})"
         )
         raise authentication_error
 
@@ -99,26 +101,26 @@ async def get_access_token(
         auth_client = google_auth_client
     else:
         # This should not happen.
-        logger.error(f"Unexpected: ({state_token.idp}) not recognized")
+        logger.error(f"auth callback: ({state_token.idp}) not recognized")
         raise authentication_error
 
     try:
         auth_user = await auth_client.authorize(code=code, token=state_token)
-        logger.info(f"Oauth successfull: (idp={state_token.idp}, email={auth_user.email})")
+        logger.info(f"oauth successfull: (idp={state_token.idp}, email={auth_user.email})")
     except OAuth2EmailPrivdedError as exc:
-        logger.exception(f"Oauth failed: (idp={state_token.idp}) {exc}")
+        logger.error(f"oauth failed: (idp={state_token.idp})")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed: primary email is not verified with provider.",
         )
     except Oauth2AuthError as exc:
-        logger.error("Oauth failed: (idp={state_token.idp}) {exc}")
+        logger.error("oauth failed: (idp={state_token.idp}) {exc}")
         raise authentication_error
 
     user = await users_db.get_by_email(email=auth_user.email)
 
     if user is None:
-        logger.info("New user: (idp={state_token.idp}, email={auth_user.email})")
+        logger.info("new user: (idp={state_token.idp}, email={auth_user.email})")
         # scope assgined to the user when he first signs up
         SIGNUP_SCOPE = "basic"
         # we are not doing out own email verification for now.
@@ -136,16 +138,16 @@ async def get_access_token(
         )
 
         if new_user is None:
-            logger.error(f"Create new user: (idp={state_token.idp}, email={auth_user.email})")
+            logger.error(f"create new user: (idp={state_token.idp}, email={auth_user.email})")
             raise authentication_error
         logger.info(
-            f"Created new user: (idp={state_token.idp}, user={new_user.userid}, scope={SIGNUP_SCOPE})"
+            f"created new user: (idp={state_token.idp}, user={new_user.userid}, scope={SIGNUP_SCOPE})"
         )
         user = new_user
     else:
         if user.idp != state_token.idp:
             logger.info(
-                f"Account exists error: (idp={state_token.idp}, account_idp={user.idp}, user={user.userid}"
+                f"account exists: (idp={state_token.idp}, account_idp={user.idp}, user={user.userid}"
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -153,7 +155,7 @@ async def get_access_token(
             )
 
         if user.frozen:
-            logger.info(f"User forzen: (user={user.userid})")
+            logger.info(f"user forzen: (user={user.userid})")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Account frozen",
@@ -174,6 +176,7 @@ async def get_access_token(
     issued_token = claims.issue_access_token()
     token = Token(
         full_name=auth_user.full_name,
+        userid=user.userid,
         picture=auth_user.picture,
         ustate=state_token.ustate,
         **issued_token.dict(),

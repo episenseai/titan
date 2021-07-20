@@ -25,7 +25,7 @@ class StateToken(ImmutBaseModel):
     # starting the login flow. This can be recovered, once the
     # Login is successfull, by sending the state back to the
     # frontend.
-    ustate: str = ""
+    ustate: str
     idp: IdentityProvider
 
     @staticmethod
@@ -55,7 +55,7 @@ class StateToken(ImmutBaseModel):
         token = StateToken(
             state=state,
             nonce=nonce,
-            uistate=ustate,
+            ustate=ustate,
             idp=idp.value,
         )
         return token
