@@ -103,7 +103,7 @@ elif [[ $COMMAND == "newkey-api" ]]; then
 	check_apislug
 	URL="$BASEURL/api/key/$APISLUG"
 elif [[ $COMMAND == "admin-login" ]]; then
-	URL="$BASEURL/x/token"
+	URL="$BASEURL/oauth/x/token"
 elif [[ $COMMAND == "freeze-user-email" ]]; then
 	check_data
 	print_data

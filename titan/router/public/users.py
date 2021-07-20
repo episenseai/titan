@@ -18,7 +18,7 @@ from ...settings.idp import (
 from ...tokens import TokenClaims
 from ...utils import ImmutBaseModel
 
-users_router = APIRouter(tags=["user/token"])
+users_router = APIRouter(tags=["user/token"], prefix="/oauth/o")
 
 
 @users_router.get("/login")
@@ -31,7 +31,11 @@ async def auth_redirect_url(
     elif p == IdentityProvider.google:
         login_client = google_login_client
     else:
-        logger.error(f"Can't issue state token: (idp={p})")
+        logger.error(f"issue token: uknown identity provider: (idp={p}, ustate={ustate})")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+
+    if not ustate or len(ustate) != 32:
+        logger.error(f"issue token: ustate error: (idp={p}, ustate={ustate})")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
     # include nonce if required
@@ -41,7 +45,7 @@ async def auth_redirect_url(
         with_nonce = False
 
     state_token = StateToken.issue(idp=p, ustate=ustate, with_nonce=with_nonce)
-    logger.info(f"Issued state token: (idp={p})")
+    logger.info(f"token issued: (idp={p}, ustate={ustate})")
 
     auth_callback_url = login_client.create_auth_url(state_token)
     state_tokens_db.store(state_token)

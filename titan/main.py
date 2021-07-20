@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .exceptions.passwd import passwd_exception_handlers
 from .logger import logger
@@ -16,6 +17,18 @@ all_exception_handlers = {}
 all_exception_handlers.update(passwd_exception_handlers)
 
 app = FastAPI(exception_handlers=all_exception_handlers)  # noqa
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")

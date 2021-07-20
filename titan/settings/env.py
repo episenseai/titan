@@ -23,11 +23,13 @@ class Settings(BaseSettings):
     POSTGRESQL_PORT: int = 5432
     POSTGRESQL_DATABASE: str = "titanpgdb"  # "mypostgresdb"
 
-    GITHUB_CLIENT_ID = "5ffe8fd42976c5f477e3"
-    GITHUB_CLIENT_SECRET: SecretStr = "d6d6dc23b03f3b53a3d471ae02acd76c3e893ded"
+    GITHUB_CLIENT_ID = "624fb90a5a0ac62b1db4"
+    GITHUB_CLIENT_SECRET: SecretStr = "00cf601e207ae3d85af157495b1eeba6fc00f509"
+    GITHUB_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: SecretStr = "WmUcqKFLcbiYSqghIIuUi4Hb"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     @property
     def redis_url(self) -> str:

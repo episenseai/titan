@@ -8,7 +8,7 @@ from ...utils import ImmutBaseModel
 from ..depends import get_decoded_token, store_decoded_token, validate_ttype_access
 
 admins_router = APIRouter(
-    prefix="/x",
+    prefix="/oauth/x",
     tags=["admin/token"],
     dependencies=[
         Depends(store_decoded_token),
