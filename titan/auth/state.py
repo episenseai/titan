@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Optional, Union
 
 import redis
+from pydantic import UUID4
 
 from ..logger import logger
 from ..utils import ImmutBaseModel
@@ -25,7 +26,7 @@ class StateToken(ImmutBaseModel):
     # starting the login flow. This can be recovered, once the
     # Login is successfull, by sending the state back to the
     # frontend.
-    ustate: str
+    ustate: UUID4
     idp: IdentityProvider
 
     @staticmethod
@@ -44,9 +45,7 @@ class StateToken(ImmutBaseModel):
         return state
 
     @classmethod
-    def issue(
-        cls, idp: IdentityProvider, ustate: Optional[str] = None, with_nonce: bool = False
-    ) -> "StateToken":
+    def issue(cls, idp: IdentityProvider, ustate: UUID4, with_nonce: bool = False) -> "StateToken":
         state = cls.gen_state()
         if with_nonce:
             nonce = cls.gen_state()

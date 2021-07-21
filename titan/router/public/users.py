@@ -25,19 +25,17 @@ users_router = APIRouter(tags=["user/token"], prefix="/oauth/o")
 @users_router.get("/login")
 async def auth_redirect_url(
     p: IdentityProvider = Query(...),
-    ustate: str = Query(""),
+    ustate: UUID4 = Query(...),
 ):
     if p == IdentityProvider.github:
         login_client = github_login_client
     elif p == IdentityProvider.google:
         login_client = google_login_client
     else:
-        logger.error(f"issue token: uknown identity provider: (idp={p}, ustate={ustate})")
+        logger.error(f"issue token: unknown identity provider: (idp={p}, ustate={ustate})")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
-    if not ustate or len(ustate) != 32:
-        logger.error(f"issue token: ustate error: (idp={p}, ustate={ustate})")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    logger.info(ustate)
 
     # include nonce if required
     if p == IdentityProvider.google:
@@ -60,7 +58,7 @@ class Token(ImmutBaseModel):
     full_name: Optional[str] = None
     userid: UUID4
     picture: Optional[str] = None
-    ustate: Optional[str] = None
+    ustate: UUID4
 
 
 # Authorization callback URL
