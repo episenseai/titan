@@ -1,4 +1,5 @@
 from typing import Optional
+import asyncio
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +17,10 @@ async def store_decoded_token(request: Request, token: str = Depends(oauth2_sche
     """
     decoded_token = await validate_token(token)
     if decoded_token is None:
+        # NOTE: auth tarpit: introduce a delay in response when the validation fails.
+        # This is should be done in a more proper way.
+        # Sleep for 5 secnonds
+        await asyncio.sleep(5)
         error_msg = "Authentication Error"
         logger.error(f"{error_msg} TOKEN={token}")
         raise HTTPException(
