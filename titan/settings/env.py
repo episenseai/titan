@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Optional
+from enum import Enum, unique
 
 from pydantic import BaseSettings, SecretStr, validator
 
@@ -10,28 +11,39 @@ ADMINS_TABLE = "testadmins"
 APIS_TABLE = "testapis"
 
 
+@unique
+class Env(str, Enum):
+    DEV = "DEV"
+    PRODUCTION = "PRODUCTION"
+
+
 class Settings(BaseSettings):
+    ENV: Env = Env.DEV
+
+    # User setting is ignored and it always use the deault value
     PORT: int = 3001
-    REDIS_PASSWORD: SecretStr = ""  # "password123"
+    REDIS_PASSWORD: Optional[SecretStr] = None
     REDIS_HOST: str = "localhost"
+    # User setting is ignored and it always use the deault value
     REDIS_PORT: int = 6379
     REDIS_DATABASE_NUMBER: int = 1
 
-    POSTGRESQL_USER: Optional[str] = None  # "postgres"
-    POSTGRESQL_PASSWORD: Optional[SecretStr] = None  # "password123"
+    POSTGRESQL_USER: Optional[str] = None
+    POSTGRESQL_PASSWORD: Optional[SecretStr] = None
     POSTGRESQL_HOST: str = "localhost"
+    # User setting is ignored and it always use the deault value
     POSTGRESQL_PORT: int = 5432
-    POSTGRESQL_DATABASE: str = "titanpgdb"  # "mypostgresdb"
+    POSTGRESQL_DATABASE: str = "titanpgdb"
 
     GITHUB_CLIENT_ID = "624fb90a5a0ac62b1db4"
     GITHUB_CLIENT_SECRET: SecretStr = "00cf601e207ae3d85af157495b1eeba6fc00f509"
-    # Redirect OAUTH provider to this athena frontend URL which will then call us
+    # Redirect github oauth to this athena frontend URL which will then call us
     # and complete the authorization
     GITHUB_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: SecretStr = "HO3XmTEiUGwnfFKkuy--rEA4"
-    # Redirect OAUTH provider to this athena frontend URL which will then call us
+    # Redirect google oauth to this athena frontend URL which will then call us
     # and complete the authorization.
     GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
@@ -49,6 +61,14 @@ class Settings(BaseSettings):
     def ignore_postgresql_port(cls, _):
         """Always run on default port. Ignore environement"""
         return 5432
+
+    @property
+    def redis_pasword(self) -> Optional[str]:
+        secret = self.REDIS_PASSWORD
+        if secret is None:
+            return None
+        else:
+            return secret.get_secret_value()
 
     @property
     def redis_url(self) -> str:

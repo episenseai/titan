@@ -95,6 +95,6 @@ async def initialize_JWKS_keys():
 state_tokens_db = StateTokensDB(
     redis_host=env().REDIS_HOST,
     redis_port=env().REDIS_PORT,
-    redis_password=env().REDIS_PASSWORD.get_secret_value(),
+    redis_password=env().redis_pasword,
     redis_db=env().REDIS_DATABASE_NUMBER,
 )
