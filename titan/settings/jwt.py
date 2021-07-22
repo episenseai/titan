@@ -7,8 +7,7 @@ from pydantic.types import StrictBool, StrictStr
 
 from ..utils import ImmutBaseModel
 
-# In the real case, you can put the
-# public key and private key in *.pem, *.key then you can read that file
+# NOTE: Do not use this harccoded public/private key pair in production
 private_key = """
 -----BEGIN RSA PRIVATE KEY-----
 MIICWwIBAAKBgGBoQhqHdMU65aSBQVC/u9a6HMfKA927aZOk7HA/kXuA5UU4Sl+U
@@ -53,7 +52,6 @@ asymetric_crypto = {
 
 class JWTSettings(ImmutBaseModel):
     authjwt_algorithm: StrictStr = "RS512"
-    authjwt_secret_key: Optional[StrictStr] = None
     authjwt_public_key: Optional[StrictStr] = public_key
     authjwt_private_key: Optional[StrictStr] = private_key
     authjwt_access_token_expires: timedelta = timedelta(minutes=240)
@@ -64,11 +62,14 @@ class JWTSettings(ImmutBaseModel):
 
     @validator("authjwt_algorithm", always=True)
     def validate_algorithm(cls, v):
+        if v in asymetric_crypto:
+            return v
+        if v in symmetric_crypto:
+            raise RuntimeError("Symmetric crypto not supported = v for jwt")
         if v not in symmetric_crypto and v not in asymetric_crypto:
             raise RuntimeError(
                 f"authjwt_algorithm = '{v}' not in supported symmetric/asymetric list"
             )
-        return v
 
     @validator("authjwt_denylist_token_types", each_item=True, always=True)
     def validate_denylist(cls, v):
@@ -82,9 +83,9 @@ class JWTSettings(ImmutBaseModel):
         algo = values.get("authjwt_algorithm")
         if algo in asymetric_crypto:
             if values.get("authjwt_public_key") is None:
-                raise RuntimeError("authjwt_public_key not provided")
+                raise RuntimeError("authjwt_public_key is not provided")
             if values.get("authjwt_private_key") is None:
-                raise RuntimeError("authjwt_private_key not provided")
+                raise RuntimeError("authjwt_private_key is not provided")
         if algo in symmetric_crypto:
             if values.get("authjwt_secret_key") is None:
                 raise RuntimeError("authjwt_secret_key not provided")
@@ -109,7 +110,7 @@ class JWTSettings(ImmutBaseModel):
             else:
                 raise RuntimeError(f"unsupported_method = {method} for jwt")
         elif self.authjwt_algorithm in symmetric_crypto:
-            return self.authjwt_secret_key
+            raise RuntimeError(f"Symmetric crypto not supported = {self.authjwt_algorithm} for jwt")
         else:
             raise RuntimeError(f"Unsupported algorithm = {self.authjwt_algorithm} for jwt")
 

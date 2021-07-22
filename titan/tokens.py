@@ -141,6 +141,7 @@ async def validate_token(raw_token: str) -> Optional[DecodedToken]:
     try:
         decoded_token = jwt.decode(
             raw_token,
+            # decoding only needs public key
             config.get_secret_key("decode"),
             algorithms=config.authjwt_algorithm,
             options={
