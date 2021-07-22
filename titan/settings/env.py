@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Optional
 
-from pydantic import BaseSettings, SecretStr
+from pydantic import BaseSettings, SecretStr, validator
 
 from ..utils import ImmutBaseModel
 
@@ -30,6 +30,21 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: SecretStr = "HO3XmTEiUGwnfFKkuy--rEA4"
     GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
+
+    @validator("PORT", pre=True, always=True)
+    def ignore_port(cls, _):
+        """Always run on default port. Ignore environement"""
+        return 3001
+
+    @validator("REDIS_PORT", pre=True, always=True)
+    def ignore_redis_port(cls, _):
+        """Always run on default port. Ignore environement"""
+        return 6379
+
+    @validator("POSTGRESQL_PORT", pre=True, always=True)
+    def ignore_postgresql_port(cls, _):
+        """Always run on default port. Ignore environement"""
+        return 5432
 
     @property
     def redis_url(self) -> str:

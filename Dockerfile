@@ -56,6 +56,8 @@ RUN --mount=from=python-requirements,src=/app/target,target=/app/target set -x &
 
 COPY titan ./titan/
 
+# Always run on default port. Ignore environment
+# redis and postgres are expected at default ports 6379 and 5432 respectively.
 EXPOSE 3001
 
 USER python
