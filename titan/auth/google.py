@@ -112,46 +112,47 @@ class GoogleAuthClient(OAuth2AuthClient):
 
     async def update_jwks_keys(self):
         keys = self.jwks_keys.get("keys", None)
-        expiration_datetime = self.jwks_keys.get("expiration_datetime", None)
-        if keys is not None and expiration_datetime is not None:
-            if datetime.utcnow() <= expiration_datetime:
+
+        if keys is not None:
+            if datetime.utcnow() <= self.jwks_keys.get("expiration_datetime"):
+                # keys are still valid
                 return
 
+        error = False
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(str(self.jwks_uri))
                 response.raise_for_status()
-            except (httpx.HTTPStatusError, httpx.RequestError) as exc:
-                err_msg = f"Google JWS keys endpoint: {exc=} {exc.request.url}"
-                logger.error(err_msg)
-                raise Oauth2AuthError(err_msg) from exc
-            except Exception as exc:
-                err_msg = f"Unexpected: Google JWS keys endpoint: {exc=} {exc.request.url}"
-                logger.exception(err_msg)
-                raise Oauth2AuthError(err_msg) from exc
-
-            try:
+                logger.info("Fetched JWKS keys from google")
                 jwks_keys = response.json()
+                logger.info("Successfully decoded JWKS keys from google")
+            except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+                logger.critical("Could not fetch JWKS keys from google. {repr(exc)}")
+                error = True
             except Exception as exc:
-                err_msg = f"Google JWS keys decode: {exc}"
-                logger.exception(err_msg)
-                raise Oauth2AuthError(err_msg)
+                logger.critical(
+                    "Could not fetch JWKS keys from google. Unexpected exception: {repr(exc)}"
+                )
+                error = True
 
-            # Update stale JWS keys with freshly downloaded ones
+        # Update stale JWS keys with freshly downloaded ones
+        if not error:
             self.jwks_keys.update(jwks_keys)
+            # Keys are supposed to expire 1 hour after download. Set this to some sane
+            # value.
             self.jwks_keys.update(
                 {"expiration_datetime": datetime.utcnow() + timedelta(hours=1)},
             )
-
-            logger.info("Fetched Google JWKS keys")
+        elif keys is not None:
+            logger.warning("Will use stale keys for now")
 
     async def validate_id_token(self, jwt_token: str, access_token: str) -> dict[str, Any]:
         await self.update_jwks_keys()
         keys = self.jwks_keys.get("keys", None)
         if not keys:
-            err_msg = f"Somethin fatal happened: 'jwks_keys' keys are missing for google {self.jwks_keys=}"
+            err_msg = "JWKS keys are missing for google"
             logger.critical(err_msg)
-            Oauth2AuthError(err_msg)
+            raise Oauth2AuthError(err_msg)
         try:
             success = False
             for key in keys:

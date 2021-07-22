@@ -88,9 +88,12 @@ async def startup():
         exit(1)
     if not await check_table_existence():
         exit(1)
-
-    # NOTE: Run in production
-    # await initialize_JWKS_keys()
+    # Constant reloading will in dev mode will unnecessarily fetch keys over and
+    # over again. In production we need to fail early if the keys could not be
+    # fetched.
+    if env().ENV == Env.PRODUCTION:
+        if not await initialize_JWKS_keys():
+            exit(1)
 
 
 # This runs when the application is winding down

@@ -32,7 +32,7 @@ apis_db = APIsTable(postgres_database, APIS_TABLE, USERS_TABLE)
 apis_db_internal = APIsTableInternal(postgres_database, APIS_TABLE, USERS_TABLE)
 
 
-async def postgres_connect(retries: int = 4, backoff_seconds: int = 5):
+async def postgres_connect(retries: int = 4, backoff_seconds: int = 5) -> bool:
     for x in range(retries):
         try:
             await postgres_database.connect()
@@ -63,7 +63,7 @@ async def postgres_connect(retries: int = 4, backoff_seconds: int = 5):
             return False
 
 
-async def check_table_existence():
+async def check_table_existence() -> bool:
     dbs = []
 
     dbs.append(UsersTableManage(postgres_database, USERS_TABLE))
@@ -78,18 +78,17 @@ async def check_table_existence():
     return True
 
 
-async def initialize_JWKS_keys():
-    """
-    Run this in production to aovid fetching keys over and over again
-    """
+async def initialize_JWKS_keys() -> bool:
     if google_auth_client.jwks_uri is None:
-        logger.error("Google missing JWKS uri: needed for GoogleAuthClient")
-        exit(1)
-    try:
-        await google_auth_client.update_jwks_keys()
-    except Exception:
-        logger.exception("Could not download JWKS keys from Google")
-        exit(1)
+        logger.critical("missing JWKS uri for google")
+        return False
+
+    await google_auth_client.update_jwks_keys()
+    if google_auth_client.jwks_keys.get("keys") is None:
+        logger.critical("could not download JWKS keys for google")
+        return False
+
+    return True
 
 
 state_tokens_db = StateTokensDB(
