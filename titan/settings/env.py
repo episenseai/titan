@@ -20,18 +20,18 @@ class Env(str, Enum):
 class Settings(BaseSettings):
     ENV: Env = Env.DEV
 
-    # User setting is ignored and it always use the deault value
+    # User setting is ignored and it always uses the deault value
     PORT: int = 3001
     REDIS_PASSWORD: Optional[SecretStr] = None
     REDIS_HOST: str = "localhost"
-    # User setting is ignored and it always use the deault value
+    # User setting is ignored and it always uses the deault value
     REDIS_PORT: int = 6379
     REDIS_DATABASE_NUMBER: int = 1
 
     POSTGRESQL_USER: Optional[str] = None
     POSTGRESQL_PASSWORD: Optional[SecretStr] = None
     POSTGRESQL_HOST: str = "localhost"
-    # User setting is ignored and it always use the deault value
+    # User setting is ignored and it always uses the deault value
     POSTGRESQL_PORT: int = 5432
     POSTGRESQL_DATABASE: str = "titanpgdb"
 
