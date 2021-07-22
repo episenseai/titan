@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: SecretStr = ""  # "password123"
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
-    REDIS_DATABASE_NUMBER: int = 2
+    REDIS_DATABASE_NUMBER: int = 1
 
     POSTGRESQL_USER: Optional[str] = None  # "postgres"
     POSTGRESQL_PASSWORD: Optional[SecretStr] = None  # "password123"
@@ -25,10 +25,14 @@ class Settings(BaseSettings):
 
     GITHUB_CLIENT_ID = "624fb90a5a0ac62b1db4"
     GITHUB_CLIENT_SECRET: SecretStr = "00cf601e207ae3d85af157495b1eeba6fc00f509"
+    # Redirect OAUTH provider to this athena frontend URL which will then call us
+    # and complete the authorization
     GITHUB_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: SecretStr = "HO3XmTEiUGwnfFKkuy--rEA4"
+    # Redirect OAUTH provider to this athena frontend URL which will then call us
+    # and complete the authorization.
     GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
 
     @validator("PORT", pre=True, always=True)
