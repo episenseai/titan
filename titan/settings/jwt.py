@@ -54,7 +54,7 @@ class JWTSettings(ImmutBaseModel):
     authjwt_algorithm: StrictStr = "RS512"
     authjwt_public_key: Optional[StrictStr] = public_key
     authjwt_private_key: Optional[StrictStr] = private_key
-    authjwt_access_token_expires: timedelta = timedelta(minutes=240)
+    authjwt_access_token_expires: timedelta = timedelta(minutes=60)
     authjwt_refresh_token_expires: timedelta = timedelta(hours=8)
     authjwt_xaccess_token_expires: timedelta = timedelta(hours=1)
     authjwt_denylist_enabled: StrictBool = False

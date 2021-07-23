@@ -14,14 +14,17 @@ async def store_decoded_token(request: Request, token: str = Depends(oauth2_sche
     """
     Store the `DecodedToken` into `request.state`
     """
-    decoded_token = await validate_token(token)
+    (decoded_token, is_expired) = await validate_token(token)
     if decoded_token is None:
-        error_msg = "Authentication Error"
-        logger.error(f"{error_msg} TOKEN={token}")
+        logger.error(f"could not decode token: TOKEN={token}")
+        headers = {"WWW-Authenticate": "Bearer"}
+        if is_expired:
+            headers["Access-Control-Expose-Headers"] = "X-Expired-AccessToken"
+            headers["X-Expired-AccessToken"] = "1"
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=error_msg,
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Authentication Error",
+            headers=headers,
         )
     request.state.decoded_token = decoded_token
 

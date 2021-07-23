@@ -4,7 +4,7 @@ from enum import Enum, unique
 from typing import Optional, Union
 
 from jose import jwt
-from jose.exceptions import JOSEError, JWTError
+from jose.exceptions import JOSEError, JWTError, ExpiredSignatureError
 from pydantic import UUID4, ValidationError, validator
 
 from .logger import logger
@@ -135,7 +135,10 @@ class DecodedToken(ImmutBaseModel):
     ttype: TokenType
 
 
-async def validate_token(raw_token: str) -> Optional[DecodedToken]:
+async def validate_token(raw_token: str) -> tuple[Optional[DecodedToken], bool]:
+    """
+    Returns (decoded_token | None, is_expired)
+    """
     config = get_jwt_config()
 
     try:
@@ -152,14 +155,17 @@ async def validate_token(raw_token: str) -> Optional[DecodedToken]:
             },
             issuer=TOKEN_ISS,
         )
-        logger.info(f"Decoded Bearer token for sub={decoded_token['sub']}")
-        return DecodedToken(**decoded_token)
+        logger.info(f"decoded Bearer token: sub={decoded_token['sub']}")
+        return (DecodedToken(**decoded_token), False)
+    except ExpiredSignatureError:
+        logger.info("got expired token")
+        return (None, True)
     except (JWTError, JOSEError) as exc:
-        logger.error(f"JWT decode error: {exc}")
-        return None
+        logger.error(f"token decode: {exc}")
+        return (None, False)
     except ValidationError as exc:
-        logger.error(f"JWT token decode error: {exc}")
-        return None
+        logger.error(f"token validation: {exc}")
+        return (None, False)
     except Exception:
-        logger.exception("Unknown JWT decode error")
-        return None
+        logger.exception("token decode: unexpected error:")
+        return (None, False)
