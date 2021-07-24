@@ -21,7 +21,17 @@ from .settings.env import env, Env
 # Install global exception handlers for the exceptions we care about
 all_exception_handlers = {}
 all_exception_handlers.update(passwd_exception_handlers)
-app = FastAPI(exception_handlers=all_exception_handlers)
+
+
+# https://fastapi.tiangolo.com/tutorial/metadata/
+disable_api_description = True
+
+if env().ENV == Env.PRODUCTION or disable_api_description:
+    app = FastAPI(
+        exception_handlers=all_exception_handlers, openapi_url=None, docs_url=None, redoc_url=None
+    )
+else:
+    app = FastAPI(exception_handlers=all_exception_handlers)
 
 
 if env().ENV == Env.PRODUCTION:
