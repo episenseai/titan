@@ -2,7 +2,6 @@ from ..auth.github import GithubAuthClient, GithubLoginClient
 from ..auth.google import GoogleAuthClient, GoogleLoginClient
 from .env import env
 
-
 GITHUB_CLIENT_SCOPE = "read:user user:email"
 
 GOOGLE_CLIENT_SCOPE = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"

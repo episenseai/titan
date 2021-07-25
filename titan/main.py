@@ -16,7 +16,7 @@ from .settings.backends import (
     postgres_connect,
     postgres_database,
 )
-from .settings.env import env, Env
+from .settings.env import Env, env
 
 # Install global exception handlers for the exceptions we care about
 all_exception_handlers = {}

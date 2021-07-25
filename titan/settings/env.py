@@ -1,6 +1,6 @@
+from enum import Enum, unique
 from functools import lru_cache
 from typing import Optional
-from enum import Enum, unique
 
 from pydantic import BaseSettings, SecretStr, validator
 

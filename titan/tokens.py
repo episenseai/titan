@@ -4,7 +4,7 @@ from enum import Enum, unique
 from typing import Optional, Union
 
 from jose import jwt
-from jose.exceptions import JOSEError, JWTError, ExpiredSignatureError
+from jose.exceptions import ExpiredSignatureError, JOSEError, JWTError
 from pydantic import UUID4, ValidationError, validator
 
 from .logger import logger
