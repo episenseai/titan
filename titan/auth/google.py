@@ -56,6 +56,7 @@ class GoogleLoginClient(OAuth2LoginClient):
             "redirect_uri": self.redirect_uri,
             "access_type": access_type,
             "state": token.state,
+            "prompt": "select_account",
         }
         # nonce is present if using OpenId Connect to get the id_token
         if token.nonce is not None:
