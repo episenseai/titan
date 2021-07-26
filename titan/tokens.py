@@ -76,7 +76,8 @@ class TokenClaims(ImmutBaseModel):
             exp = current_time + config.authjwt_xaccess_token_expires
             expires_in = int(config.authjwt_xaccess_token_expires / timedelta(seconds=1)) - 10
         else:
-            raise RuntimeError(f"Can not issue token of {ttype=}")
+            logger.critical(f"Can not issue token of {ttype=}")
+            exit(1)
 
         claims_dict = {}
 
