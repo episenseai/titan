@@ -78,14 +78,10 @@ if env().ENV == Env.PRODUCTION:
 # excluding everything that involves credentials: Cookies, Authorization headers
 # like those used with Bearer Tokens, etc. So, for everything to work correctly,
 # it's better to specify explicitly the allowed origins.
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=False,
+    allow_origins=[env().CORS_ORIGIN],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
