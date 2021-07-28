@@ -20,6 +20,7 @@ class Env(str, Enum):
 class Settings(BaseSettings):
     ENV: Env = Env.DEV
 
+    CORS_ENABLED: bool = True
     CORS_ORIGIN: str = "http://localhost:3000"
 
     # User setting is ignored and it always uses the deault value

@@ -70,22 +70,6 @@ if env().ENV == Env.PRODUCTION:
         return await request_validation_exception_handler(request, exc)
 
 
-# CORS middleware for handling Cross-Origin requests. If the frontend is running
-# at a different origin than this application add that origin to the list.
-#
-# It's also possible to declare the list as "*" (a "wildcard") to say that all
-# are allowed. But that will only allow certain types of communication,
-# excluding everything that involves credentials: Cookies, Authorization headers
-# like those used with Bearer Tokens, etc. So, for everything to work correctly,
-# it's better to specify explicitly the allowed origins.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[env().CORS_ORIGIN],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # This runs when the application starts
 @app.on_event("startup")
 async def startup():
@@ -114,3 +98,20 @@ app.include_router(apis_router)
 app.include_router(users_router_internal)
 app.include_router(admins_router_internal)
 app.include_router(apis_router_internal)
+
+
+# CORS middleware for handling Cross-Origin requests. If the frontend is running
+# at a different origin than this application add that origin to the list.
+#
+# It's also possible to declare the list as "*" (a "wildcard") to say that all
+# are allowed. But that will only allow certain types of communication,
+# excluding everything that involves credentials: Cookies, Authorization headers
+# like those used with Bearer Tokens, etc. So, for everything to work correctly,
+# it's better to specify explicitly the allowed origins.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[env().CORS_ORIGIN] if env().CORS_ENABLED else [],
+    allow_credentials=True,
+    allow_methods=["*"] if env().CORS_ENABLED else [],
+    allow_headers=["*"] if env().CORS_ENABLED else [],
+)
