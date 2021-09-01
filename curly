@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=2086,2048
+
 set -e
 
 if [[ $DEBUG_ALL == 1 ]]; then
