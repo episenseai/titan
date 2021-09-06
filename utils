@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 usage() {
-	echo 'Usage: ./utils [--clean] [--reinstall] [--format] [--docker-build]'
+	echo 'Usage: ./utils [--clean] [--install] [--reinstall] [--format] [--docker-build]'
 }
 
 CLEAN=0
+INSTALL=0
 REINSTALL=0
 FORMAT=0
 DOCKERBUILD=0
@@ -13,6 +14,9 @@ while [ "$1" != "" ]; do
 	case $1 in
 	--clean)
 		CLEAN=1
+		;;
+	--install)
+		INSTALL=1
 		;;
 	--reinstall)
 		REINSTALL=1
@@ -53,10 +57,11 @@ if ! command -v poetry >/dev/null 2>&1; then
 	echo ERROR: poetry not installed
 fi
 
-if [ "$REINSTALL" -eq 1 ]; then
-	VENV_DIR=$(poetry env info -p)
-	[ -n "$VENV_DIR" ] && [ -d "$VENV_DIR" ] && rm -rf "$VENV_DIR" && echo "Deleted current virtualenv..."
-	poetry env use python
+if [ "$INSTALL" -eq 1 ] || [ "$REINSTALL" -eq 1 ]; then
+	if [ "$REINSTALL" -eq 1 ]; then
+		VENV_DIR=$(poetry env info -p)
+		[ -n "$VENV_DIR" ] && [ -d "$VENV_DIR" ] && rm -rf "$VENV_DIR" && echo "Deleted current virtualenv..."
+	fi
 	poetry run pip install -U pip && poetry run pip install -U setuptools wheel
 	poetry install || SYSTEM_VERSION_COMPAT=1 poetry install
 	exit $?
