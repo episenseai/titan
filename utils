@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-	echo 'Usage: ./utils [--clean] [--install] [--reinstall] [--format] [--docker-build]'
+	echo "Usage: ./$(basename "${BASH_SOURCE[0]}") [--clean] [--install] [--reinstall] [--format] [--docker-build]"
 }
 
 CLEAN=0
