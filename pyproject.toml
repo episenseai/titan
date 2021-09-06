@@ -28,7 +28,6 @@ uvicorn = "^0.14.0"
 pytest = "^5.2"
 flake8 = "^3.8.4"
 flake8-comprehensions = "^3.3.1"
-mypy = "^0.812"
 black = "^20.8b1"
 isort = "^5.7.0"
 devtools = {extras = ["pygments"], version = "^0.6.1"}
