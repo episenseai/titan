@@ -21,7 +21,7 @@ RUN set -x; \
             rm -rf /var/lib/apt/lists/*; \
         fi
 
-ENV POETRY_VERSION=1.1.7 \
+ENV POETRY_VERSION=1.1.8 \
     POETRY_HOME="/opt/poetry" \
     POETRY_NO_INTERACTION=1 \
     PIP_DEFAULT_TIMEOUT=100
@@ -41,23 +41,17 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export --format=requirements.txt >requirements-prod.txt
 
 
-FROM python-base AS python-app
+FROM python-base AS titan
 
 RUN --mount=from=python-requirements,src=/app/target,target=/app/target set -x && \
         pip3 install --no-cache-dir -U pip && \
         pip3 install --no-cache-dir -U setuptools wheel && \
         pip3 install --no-cache-dir -r target/requirements-prod.txt
-        # if ! command -v htop > /dev/null; then \
-        #     apt-get update; \
-        #     apt-get install --no-install-recommends -y htop; \
-        #     rm -rf /var/lib/apt/lists/*; \
-        # fi
-
 
 COPY titan ./titan/
 
-# Always run on default port. Ignore environment
-# redis and postgres are expected at default ports 6379 and 5432 respectively.
+# ignore environment and always run on default port
+# 'redis' and 'postgres' are expected at default ports 6379 and 5432 respectively.
 EXPOSE 3001
 
 USER python

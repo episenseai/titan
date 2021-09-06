@@ -2,14 +2,12 @@ import json
 import logging.config
 
 import typer
-from databases import Database
 
-from .logger import logger
 from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
 from .models.manage import AdminsTableManage, APIsTableManage, UsersTableManage
 from .models.public import AdminsTable, APIsTable, UsersTable
-from .settings.backends import check_table_existence, postgres_connect, postgres_database
-from .settings.env import ADMINS_TABLE, APIS_TABLE, USERS_TABLE, env
+from .settings.backends import postgres_connect, postgres_database
+from .settings.env import ADMINS_TABLE, APIS_TABLE, USERS_TABLE
 from .utils import coro
 
 cli = typer.Typer()

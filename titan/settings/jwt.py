@@ -5,9 +5,9 @@ from typing import Optional
 from pydantic import root_validator, validator
 from pydantic.types import StrictBool, StrictStr
 
-from ..utils import ImmutBaseModel
-from .env import env, Env
 from ..logger import logger
+from ..utils import ImmutBaseModel
+from .env import Env, env
 
 # NOTE: Do not use this harccoded public/private key pair in production
 private_key = """
