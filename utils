@@ -40,7 +40,7 @@ while [ "$1" != "" ]; do
 	shift
 done
 
-[ "$CLEAN" -eq 0 ] && [ "$FORMAT" -eq 0 ] && [ "$REINSTALL" -eq 0 ] && [ "$DOCKERBUILD" -eq 0 ] &&
+[ "$CLEAN" -eq 0 ] && [ "$FORMAT" -eq 0 ] && [ "$INSTALL" -eq 0 ]  && [ "$REINSTALL" -eq 0 ] && [ "$DOCKERBUILD" -eq 0 ] &&
 	echo ERROR: need at least one flag && usage && exit 1
 
 if [ "$CLEAN" -eq 1 ]; then
@@ -62,8 +62,7 @@ if [ "$INSTALL" -eq 1 ] || [ "$REINSTALL" -eq 1 ]; then
 		VENV_DIR=$(poetry env info -p)
 		[ -n "$VENV_DIR" ] && [ -d "$VENV_DIR" ] && rm -rf "$VENV_DIR" && echo "Deleted current virtualenv..."
 	fi
-	poetry run pip install -U pip && poetry run pip install -U setuptools wheel
-	poetry install || SYSTEM_VERSION_COMPAT=1 poetry install
+	SYSTEM_VERSION_COMPAT=1 poetry run pip install -U pip && poetry run pip install -U setuptools wheel && poetry install
 	exit $?
 fi
 
