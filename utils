@@ -73,5 +73,5 @@ if [ "$FORMAT" -eq 1 ]; then
 fi
 
 if [ "$DOCKERBUILD" -eq 1 ]; then
-	docker build -t titan:latest --target titan .
+	DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=${BUILDKIT_PROGRESS:-plain} docker build -t titan:latest --target titan .
 fi
