@@ -2,7 +2,7 @@
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-FROM python:3.9.6-slim-buster AS python-base
+FROM python:3.9.7-slim-buster AS python-base
 
 RUN groupadd --gid 1000 python && useradd --uid 1000 --gid python --shell /bin/bash --create-home python
 
