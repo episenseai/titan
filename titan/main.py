@@ -73,7 +73,7 @@ if env().ENV == Env.PRODUCTION:
 # This runs when the application starts
 @app.on_event("startup")
 async def startup():
-    logger.warning(f"+++++++++++++ RUNNING IN [ {env().ENV} ] MODE +++++++++++++")
+    logger.warning(f"========== RUNNING IN [{env().ENV}] MODE ==========")
     if not await postgres_connect():
         exit(1)
     if not await check_table_existence():

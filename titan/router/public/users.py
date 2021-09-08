@@ -105,20 +105,20 @@ async def get_access_token(
     try:
         auth_user = await auth_client.authorize(code=code, token=state_token)
         logger.info(f"oauth successfull: (idp={state_token.idp}, email={auth_user.email})")
-    except OAuth2EmailPrivdedError as exc:
+    except OAuth2EmailPrivdedError:
         logger.error(f"oauth failed: (idp={state_token.idp})")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed: primary email is not verified with provider.",
         )
-    except Oauth2AuthError as exc:
+    except Oauth2AuthError:
         logger.error("oauth failed: (idp={state_token.idp}) {exc}")
         raise authentication_error
 
     user = await users_db.get_by_email(email=auth_user.email)
 
     if user is None:
-        logger.info("new user: (idp={state_token.idp}, email={auth_user.email})")
+        logger.info(f"NEW USER: (idp={state_token.idp}, email={auth_user.email})")
         # scope assgined to the user when he first signs up
         SIGNUP_SCOPE = "basic"
         # we are not doing out own email verification for now.
