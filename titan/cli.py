@@ -1,7 +1,7 @@
 import json
 import logging.config
 
-from devtools import debug
+from pprint import pprint
 import typer
 
 from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
@@ -261,10 +261,11 @@ async def all_users(csv: bool = False):
         csv_writer = csv.DictWriter(writer, fieldnames=val[0].keys())
         csv_writer.writeheader()
         csv_writer.writerows(val)
+
         print(writer.getvalue())
         writer.close()
     else:
-        debug(val)
+        pprint(val)
 
 
 if __name__ == "__main__":
