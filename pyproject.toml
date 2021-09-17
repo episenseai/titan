@@ -46,15 +46,12 @@ line_length = 100
 [tool.pyright]
 include = ["titan"]
 extraPaths = ["titan"]
-exclude = [".venv", "**/__pycache__", "**/node_modules", "target"]
-#venvPath = ".venv"
-
+exclude = [".venv", "**/__pycache__"]
 reportTypeshedErrors = false
 reportUnboundVariable = "none"
 reportMissingImports = true
 reportMissingTypeStubs = false
 reportGeneralTypeIssues = "none"
-
 executionEnvironments = [
-  { root = "./", extraPaths = ["titan"], exclude = [".venv", "**/__pycache__", "**/node_modules", "target"] }
+  { root = "./", extraPaths = ["titan"], exclude = [".venv", "**/__pycache__"] }
 ]
