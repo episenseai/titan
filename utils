@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-	echo "Usage: ./$(basename "${BASH_SOURCE[0]}") [--clean] [--install] [--reinstall] [--format] [--docker-build]"
+  echo "Usage: ./$(basename "${BASH_SOURCE[0]}") [--clean] [--install] [--reinstall] [--format] [--docker-build]"
 }
 
 CLEAN=0
@@ -11,67 +11,67 @@ FORMAT=0
 DOCKERBUILD=0
 
 while [ "$1" != "" ]; do
-	case $1 in
-	--clean)
-		CLEAN=1
-		;;
-	--install)
-		INSTALL=1
-		;;
-	--reinstall)
-		REINSTALL=1
-		;;
-	--format)
-		FORMAT=1
-		;;
-	--docker-build)
-		DOCKERBUILD=1
-		;;
-	--help)
-		usage
-		exit 0
-		;;
-	*)
-		echo ERROR: unrecognized argument: "$1"
-		usage
-		exit 1
-		;;
-	esac
-	shift
+  case $1 in
+  --clean)
+    CLEAN=1
+    ;;
+  --install)
+    INSTALL=1
+    ;;
+  --reinstall)
+    REINSTALL=1
+    ;;
+  --format)
+    FORMAT=1
+    ;;
+  --docker-build)
+    DOCKERBUILD=1
+    ;;
+  --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo ERROR: unrecognized argument: "$1"
+    usage
+    exit 1
+    ;;
+  esac
+  shift
 done
 
-[ "$CLEAN" -eq 0 ] && [ "$FORMAT" -eq 0 ] && [ "$INSTALL" -eq 0 ]  && [ "$REINSTALL" -eq 0 ] && [ "$DOCKERBUILD" -eq 0 ] &&
-	echo ERROR: need at least one flag && usage && exit 1
+[ "$CLEAN" -eq 0 ] && [ "$FORMAT" -eq 0 ] && [ "$INSTALL" -eq 0 ] && [ "$REINSTALL" -eq 0 ] && [ "$DOCKERBUILD" -eq 0 ] &&
+  echo ERROR: need at least one flag && usage && exit 1
 
 if [ "$CLEAN" -eq 1 ]; then
-	rm -rf build dist .eggs -- *.egg-info
-	rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
-	find . -type d -name '.mypy_cache' -exec rm -rf {} +
-	find . -type d -name '__pycache__' -exec rm -rf {} +
-	find . -type d -name '*pytest_cache*' -exec rm -rf {} +
-	find . -type f -name "*.py[co]" -exec rm -rf {} +
-	exit $?
+  rm -rf build dist .eggs -- *.egg-info
+  rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
+  find . -type d -name '.mypy_cache' -exec rm -rf {} +
+  find . -type d -name '__pycache__' -exec rm -rf {} +
+  find . -type d -name '*pytest_cache*' -exec rm -rf {} +
+  find . -type f -name "*.py[co]" -exec rm -rf {} +
+  exit $?
 fi
 
 if ! command -v poetry >/dev/null 2>&1; then
-	echo ERROR: poetry not installed
+  echo ERROR: poetry not installed
 fi
 
 if [ "$INSTALL" -eq 1 ] || [ "$REINSTALL" -eq 1 ]; then
-	if [ "$REINSTALL" -eq 1 ]; then
-		VENV_DIR=$(poetry env info -p)
-		[ -n "$VENV_DIR" ] && [ -d "$VENV_DIR" ] && rm -rf "$VENV_DIR" && echo "Deleted current virtualenv..."
-	fi
-	SYSTEM_VERSION_COMPAT=1 poetry run pip install -U pip && poetry run pip install -U setuptools wheel && poetry install
-	exit $?
+  if [ "$REINSTALL" -eq 1 ]; then
+    VENV_DIR=$(poetry env info -p)
+    [ -n "$VENV_DIR" ] && [ -d "$VENV_DIR" ] && rm -rf "$VENV_DIR" && echo "Deleted current virtualenv..."
+  fi
+  SYSTEM_VERSION_COMPAT=1 poetry run pip install -U pip && poetry run pip install -U setuptools wheel && poetry install
+  exit $?
 fi
 
 if [ "$FORMAT" -eq 1 ]; then
-	poetry run isort titan/ tests/
-	poetry run black titan/ tests/
-	exit $?
+  poetry run isort titan/ tests/
+  poetry run black titan/ tests/
+  exit $?
 fi
 
 if [ "$DOCKERBUILD" -eq 1 ]; then
-	DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=${BUILDKIT_PROGRESS:-plain} docker build -t titan:latest --target titan .
+  DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=${BUILDKIT_PROGRESS:-plain} docker build -t titan:latest --target titan .
 fi
