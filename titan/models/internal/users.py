@@ -55,3 +55,21 @@ class UsersTableInternal(PgSQLBase):
             return True
         # this should never happen
         return False
+
+    async def select(self) -> list[dict]:
+        query = (
+            self.table.select()
+            .with_only_columns(
+                [
+                    self.table.c.email,
+                    self.table.c.full_name,
+                    self.table.c.idp,
+                    self.table.c.created_at,
+                ]
+            )
+            .order_by(self.table.c.created_at.desc())
+            .limit(20)
+        )
+        records = await self.database.fetch_all(query=query)
+        records = [{**record} for record in records]
+        return records

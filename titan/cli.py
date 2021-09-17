@@ -1,6 +1,7 @@
 import json
 import logging.config
 
+from pprint import pprint
 import typer
 
 from .models.internal import AdminsTableInternal, APIsTableInternal, UsersTableInternal
@@ -246,6 +247,25 @@ async def freeze_user_userid(
     else:
         val = await users_db_internal.unfreeze_userid(userid=userid)
     print(val)
+
+
+@cli.command("all-users", epilog="Filter log from output: ./dev-cli all-users --csv 2>/dev/null")
+@setup_wrapper
+async def all_users(csv: bool = False):
+    val = await users_db_internal.select()
+    if csv and val:
+        import csv
+        from io import StringIO
+
+        writer = StringIO()
+        csv_writer = csv.DictWriter(writer, fieldnames=val[0].keys())
+        csv_writer.writeheader()
+        csv_writer.writerows(val)
+
+        print(writer.getvalue())
+        writer.close()
+    else:
+        pprint(val)
 
 
 if __name__ == "__main__":
