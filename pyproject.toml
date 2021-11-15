@@ -36,22 +36,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 100
-exclude = "(.eggs|.git|.hg|.mypy_cache|.pytest_cache|.ipynb_checkpoints|.nox|.tox|.venv|.svn|_build|buck-out|build|dist)"
 
 [tool.isort]
 profile = "black"
-src_paths = ["titan", "tests"]
 line_length = 100
 
 [tool.pyright]
-include = ["titan"]
-extraPaths = ["titan"]
-exclude = [".venv", "**/__pycache__"]
-reportTypeshedErrors = false
-reportUnboundVariable = "none"
-reportMissingImports = true
-reportMissingTypeStubs = false
 reportGeneralTypeIssues = "none"
-executionEnvironments = [
-  { root = "./", extraPaths = ["titan"], exclude = [".venv", "**/__pycache__"] }
-]
+reportMissingTypeStubs = "none"
+reportPrivateImportUsage = "none"
