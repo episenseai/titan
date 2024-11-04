@@ -1,3 +1,8 @@
+# Project Status
+
+Project is no longer mantained.
+
+
 ## TODO
 
 - client can have multiple logins
