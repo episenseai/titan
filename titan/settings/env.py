@@ -45,14 +45,14 @@ class Settings(BaseSettings):
     # Redirect github oauth to this athena frontend URL which will then call us
     # and complete the authorization
     GITHUB_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
-    GITHUB_CLIENT_ID = "624fb90a5a0ac62b1db4"
-    GITHUB_CLIENT_SECRET: SecretStr = "00cf601e207ae3d85af157495b1eeba6fc00f509"
+    GITHUB_CLIENT_ID = "624fb90a5a0ac62b1dc4"
+    GITHUB_CLIENT_SECRET: SecretStr = "00cf601e207ae3d85af157495b1eeba6fc00f309"
 
     # Redirect google oauth to this athena frontend URL which will then call us
     # and complete the authorization.
     GOOGLE_REDIRECT_URI: str = "http://localhost:3000/auth/callback"
-    GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt87mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
-    GOOGLE_CLIENT_SECRET: SecretStr = "HO3XmTEiUGwnfFKkuy--rEA4"
+    GOOGLE_CLIENT_ID = "483992959077-cdtsj48dhnt57mjlbn6jlt707ls2st2p.apps.googleusercontent.com"
+    GOOGLE_CLIENT_SECRET: SecretStr = "HO3XmTEiUGwnfFKkuy--rEA5"
 
     @validator("PORT", pre=True, always=True)
     def ignore_port(cls, _):
